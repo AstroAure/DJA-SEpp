@@ -4,7 +4,7 @@ from sourcextractor.config import *
 
 
 ##### THESE NEXT LINES DO SOME MORE CONFIGURATION #######
-field = 'COSMOS'
+field = 'CEERS'
 fit_case = 'sersic_rg4' # this defines which model we want to fit
 set_engine('levmar')
 set_max_iterations(250)
