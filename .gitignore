@@ -1,0 +1,11 @@
+catalog/
+image/
+sepp/
+checkimages/
+validation-images/
+AWS-CLI-commands.md
+JADES-GS-z12-0.png
+JADES-GS-z13-0.png
+JADES-S_NIRCAM_long.png
+JADES-S_NIRCAM_short.png
+00_Tests.ipynb
