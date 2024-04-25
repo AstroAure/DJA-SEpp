@@ -4,7 +4,7 @@ from sourcextractor.config import *
 
 
 ##### THESE NEXT LINES DO SOME MORE CONFIGURATION #######
-field = 'CEERS'
+field = 'GDS'
 fit_case = 'sersic_rg4' # this defines which model we want to fit
 set_engine('levmar')
 set_max_iterations(250)
@@ -41,7 +41,8 @@ imgroup = load_fits_images(
             images      = list_of_IMG_names,
             psfs        = list_of_PSF_names,
             weights     = list_of_WHT_names,
-            weight_type = 'rms')
+            weight_type = 'weight',
+            weight_threshold=1.e-6)
 
 
 imgroup.split(ByKeyword('FILTER'))
