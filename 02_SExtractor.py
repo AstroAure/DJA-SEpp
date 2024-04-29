@@ -23,7 +23,8 @@ def run_sextractor(detect_img      : str, weight_img   : str,
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     seg_img = f'{dir_chckimg}/{study_name}_seg.fits'
     verbose_type = 'NORMAL' if verbose else 'QUIET'
-    os.system(f'source-extractor {detect_img} -c {config_file} \
+    os.environ['LD_LIBRARY_PATH'] = '/usr/lib' # Link 'libcfitsio.so.10'
+    os.system(f'sex {detect_img} -c {config_file} \
             -CATALOG_NAME {output_cat} \
             -WEIGHT_IMAGE {weight_img} -WEIGHT_TYPE MAP_WEIGHT \
             -PARAMETERS_NAME {params_file} \
@@ -219,6 +220,7 @@ def extract_stars(detect_img        : str,
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
+    os.remove(output_cat)
     save_catalog(hdul, star_MUvMAG, output_cat_star)
     hdul.close()
 
@@ -256,6 +258,7 @@ def extract_stars_catalog(detect_img        : str,
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
+    os.remove(output_cat)
     save_catalog(hdul, match, output_cat_star)
     hdul.close()
     hdul_star.close()

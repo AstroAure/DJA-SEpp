@@ -3,6 +3,7 @@ image/
 sepp/
 checkimages/
 validation-images/
+__pycache__/
 AWS-CLI-commands.md
 JADES-GS-z12-0.png
 JADES-GS-z13-0.png
