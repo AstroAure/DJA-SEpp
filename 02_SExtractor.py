@@ -2,6 +2,8 @@ import os
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 import astropy.units as u
+from astropy.table import Table
+import astromatic_wrapper as aw
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
@@ -206,11 +208,13 @@ def extract_stars(detect_img        : str,
                   plot_rad_bounds   : tuple = 20,
                   save_chckimg      : bool = True,
                   plot              : bool = False,
+                  clean             : bool = True,
                   verbose           : bool = False) -> None :
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     hdul = fits.open(output_cat)
     data = hdul[2].data
+    # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
     star_line = find_star_line(data, eps_DBSCAN, y_max, mag_fit, verbose, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starDetect_{study_name}.png")
     star_MUvMAG = MUvMAG_star_selection(data, star_line, y_offsets, mag_bounds, snr_min, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starLine_{study_name}.png")
     if plot | save_chckimg:
@@ -220,9 +224,10 @@ def extract_stars(detect_img        : str,
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
-    os.remove(output_cat)
-    save_catalog(hdul, star_MUvMAG, output_cat_star)
-    hdul.close()
+    if clean: os.remove(output_cat)
+    # save_catalog(hdul, star_MUvMAG, output_cat_star)
+    # hdul.close()
+    aw.utils.ldac.save_table_as_ldac(Table(data[star_MUvMAG]), output_cat_star, overwrite=True)
 
 def extract_stars_catalog(detect_img        : str, 
                           weight_img        : str,
@@ -240,13 +245,16 @@ def extract_stars_catalog(detect_img        : str,
                           plot_rad_bounds   : tuple = 20, 
                           save_chckimg      : bool = True,
                           plot              : bool = False,
+                          clean             : bool = True,
                           verbose           : bool = False) -> None:
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
-    hdul = fits.open(output_cat, memmap=True)
-    hdul_star = fits.open(input_cat_star, memmap=True)
-    data = hdul[2].data
-    data_star = hdul_star[2].data
+    with fits.open(output_cat, memmap=True, mode='denywrite') as hdul: 
+        data = hdul[2].data
+    with fits.open(input_cat_star, memmap=True, mode='denywrite') as hdul_star: 
+        data_star = hdul_star[2].data
+    # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
+    # data_star = aw.utils.ldac.get_table_from_ldac(input_cat_star, frame=1)
     coord = SkyCoord(data['ALPHA_J2000'], data['DELTA_J2000'], unit='deg', frame='icrs', equinox='j2000')
     coord_star = SkyCoord(data_star['ALPHA_J2000'], data_star['DELTA_J2000'], unit='deg', frame='icrs', equinox='j2000')
     idx, d2d, _ = coord_star.match_to_catalog_sky(coord)
@@ -258,10 +266,11 @@ def extract_stars_catalog(detect_img        : str,
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
-    os.remove(output_cat)
-    save_catalog(hdul, match, output_cat_star)
-    hdul.close()
-    hdul_star.close()
+    if clean: os.remove(output_cat)
+    # save_catalog(hdul, match, output_cat_star)
+    # hdul.close()
+    # hdul_star.close()
+    aw.utils.ldac.save_table_as_ldac(Table(data[match]), output_cat_star, overwrite=True)
 
 
 def main():
