@@ -1,4 +1,5 @@
 import os
+import glob
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 import astropy.units as u
@@ -54,11 +55,12 @@ def plot_MuvMAG(data, star_selections=[], mag_bounds=(17,30), mu_bounds=(13,25),
     # MU_MAX = max pixel value in mag/arcsec² (MAG_ZEROPOINT - 2.5*log10(FLUX_MAX*PIXELSCALE²))
     # MAG_AUTO = total flux in mag (MAG_ZEROPOINT - 2.5*log10(FLUX_AUTO))
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
-    ax.plot(data['MAG_AUTO'], data['MU_MAX'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
+    ax.hexbin(data['MAG_AUTO'], data['MU_MAX'], bins='log', mincnt=1, extent=(mag_bounds[0],mag_bounds[1],mu_bounds[0],mu_bounds[1]), cmap='inferno', lw=0.01)
+    # ax.plot(data['MAG_AUTO'], data['MU_MAX'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
     for name in star_selections:
         selection = star_selections[name]
         ax.plot(data[selection['flag']]['MAG_AUTO'], data[selection['flag']]['MU_MAX'], 
-                   marker='o', ms=0.5, ls="", c=selection['color'], label=f"{selection['label']} [{len(selection['flag'])}]",
+                   marker='o', ms=1.0, ls="", c=selection['color'], label=f"{selection['label']} [{len(selection['flag'])}]",
                    rasterized=True)
     ax.set_xlabel('MAG_AUTO')
     ax.set_ylabel('MU_MAX')
@@ -82,16 +84,17 @@ def hist_CLASS_STAR(data, star_selections=[], hist_bound=500, ax_custom=None):
 
 def plot_SNR_radius(data, star_selections=[], rad_bound=20, ax_custom=None):
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
-    ax.plot(data['FLUX_RADIUS'], data['SNR_WIN'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
+    ax.hexbin(data['FLUX_RADIUS'], data['SNR_WIN'], bins='log', mincnt=1, yscale='log', extent=(0,rad_bound,0,6), cmap='inferno', lw=0.01)
+    # ax.plot(data['FLUX_RADIUS'], data['SNR_WIN'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
     for name in star_selections:
         selection = star_selections[name]
         ax.plot(data[selection['flag']]['FLUX_RADIUS'], data[selection['flag']]['SNR_WIN'],
-                   marker='o', ms=0.5, ls="", c=selection['color'], label=f"{selection['label']} [{len(selection['flag'])}]",
+                   marker='o', ms=1.0, ls="", c=selection['color'], label=f"{selection['label']} [{len(selection['flag'])}]",
                    rasterized=True)
     ax.set_xlabel('FLUX_RADIUS')
     ax.set_ylabel('SNR_WIN')
-    ax.set_yscale('log')
     ax.set_xlim(0, rad_bound)
+    ax.set_yscale('log')
     ax.legend()
     if ax_custom is None: plt.show()
 
@@ -102,7 +105,8 @@ def plot_MuvMAG_manual(data, mag_bounds=(19,28),
     guides to manually select the star line.
     """
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
-    ax.plot(data['MAG_AUTO'], data['MU_MAX']-data['MAG_AUTO'], marker='o', ls="", ms=0.5, c='k', rasterized=True)
+    ax.hexbin(data['MAG_AUTO'], data['MU_MAX'], bins='log', mincnt=1, extent=(plot_mag_bounds[0],plot_mag_bounds[1],plot_y_bounds[0],plot_y_bounds[1]), cmap='inferno', lw=0.01)
+    # ax.plot(data['MAG_AUTO'], data['MU_MAX']-data['MAG_AUTO'], marker='o', ls="", ms=0.5, c='k', rasterized=True)
     ax.axvline(mag_bounds[0], color='r', linewidth=0.5)
     ax.axvline(mag_bounds[1], color='r', linewidth=0.5)
     ax.set_xlabel('MAG_AUTO')
@@ -209,25 +213,27 @@ def extract_stars(detect_img        : str,
                   save_chckimg      : bool = True,
                   plot              : bool = False,
                   clean             : bool = True,
+                  run_sex           : bool = True,
                   verbose           : bool = False) -> None :
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
-    run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
+    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     hdul = fits.open(output_cat)
     data = hdul[2].data
     # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
     star_line = find_star_line(data, eps_DBSCAN, y_max, mag_fit, verbose, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starDetect_{study_name}.png")
     star_MUvMAG = MUvMAG_star_selection(data, star_line, y_offsets, mag_bounds, snr_min, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starLine_{study_name}.png")
     if plot | save_chckimg:
-        star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'b', 'flag': star_MUvMAG}}
+        star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'r', 'flag': star_MUvMAG}}
         fig, ax = plt.subplots(1,2,figsize=(12,6))
         plot_MuvMAG(data, star_selections, plot_mag_bounds, plot_mu_bounds, ax_custom=ax[0])
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
     if clean: os.remove(output_cat)
-    # save_catalog(hdul, star_MUvMAG, output_cat_star)
-    # hdul.close()
-    aw.utils.ldac.save_table_as_ldac(Table(data[star_MUvMAG]), output_cat_star, overwrite=True)
+    if clean: os.remove(f"{dir_chckimg}/{study_name}_seg.fits")
+    save_catalog(hdul, star_MUvMAG, output_cat_star)
+    hdul.close()
+    # aw.utils.ldac.save_table_as_ldac(Table(data[star_MUvMAG]), output_cat_star, overwrite=True)
 
 def extract_stars_catalog(detect_img        : str, 
                           weight_img        : str,
@@ -246,43 +252,60 @@ def extract_stars_catalog(detect_img        : str,
                           save_chckimg      : bool = True,
                           plot              : bool = False,
                           clean             : bool = True,
+                          run_sex           : bool = True,
                           verbose           : bool = False) -> None:
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
-    run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
-    with fits.open(output_cat, memmap=True, mode='denywrite') as hdul: 
-        data = hdul[2].data
+    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
+    if verbose: print ("Opening star catalogs")
+    hdul = fits.open(output_cat, memmap=True, mode='denywrite') 
+    data = hdul[2].data
     with fits.open(input_cat_star, memmap=True, mode='denywrite') as hdul_star: 
         data_star = hdul_star[2].data
     # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
     # data_star = aw.utils.ldac.get_table_from_ldac(input_cat_star, frame=1)
-    coord = SkyCoord(data['ALPHA_J2000'], data['DELTA_J2000'], unit='deg', frame='icrs', equinox='j2000')
-    coord_star = SkyCoord(data_star['ALPHA_J2000'], data_star['DELTA_J2000'], unit='deg', frame='icrs', equinox='j2000')
+    coord = SkyCoord(data['ALPHA_J2000'][:], data['DELTA_J2000'][:], unit='deg', frame='icrs')
+    coord_star = SkyCoord(data_star['ALPHA_J2000'], data_star['DELTA_J2000'], unit='deg', frame='icrs')
+    if verbose: print("Matching stars")
     idx, d2d, _ = coord_star.match_to_catalog_sky(coord)
     match = idx[d2d<max_sep]
     if plot | save_chckimg:
-        star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'b', 'flag': match}}
+        print("Plotting")
+        star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'r', 'flag': match}}
         fig, ax = plt.subplots(1,2,figsize=(12,6))
         plot_MuvMAG(data, star_selections, plot_mag_bounds, plot_mu_bounds, ax_custom=ax[0])
         plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
     if clean: os.remove(output_cat)
-    # save_catalog(hdul, match, output_cat_star)
-    # hdul.close()
+    save_catalog(hdul, match, output_cat_star)
+    hdul.close()
     # hdul_star.close()
-    aw.utils.ldac.save_table_as_ldac(Table(data[match]), output_cat_star, overwrite=True)
+    # aw.utils.ldac.save_table_as_ldac(Table(data[match]), output_cat_star, overwrite=True)
 
 
 def main():
-    extract_stars(detect_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_sci.fits", \
-                  weight_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_wht.fits", \
-                  output_cat      = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat.fits", \
-                  output_cat_star = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat_star.fits", \
-                  config_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST.sex", \
-                  params_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST-SW.param", \
-                  dir_chckimg     = "/home/aurelien/DAWN/DJA_SE++/JADES-checkimages", \
-                  y_max = -4.5, \
-                  save_chckimg = True, plot = False, verbose = True)
+    # extract_stars(detect_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_sci.fits", \
+    #               weight_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_wht.fits", \
+    #               output_cat      = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat.fits", \
+    #               output_cat_star = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat_star.fits", \
+    #               config_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST.sex", \
+    #               params_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST-SW.param", \
+    #               dir_chckimg     = "/home/aurelien/DAWN/DJA_SE++/JADES-checkimages", \
+    #               y_max = -4.5, \
+    #               save_chckimg = True, plot = False, verbose = True)
+
+    field = 'GDS'
+    filter = 'f200w'
+    extract_stars_catalog(detect_img      = glob.glob(f"/FlashStorage/image/{field}/*{filter}*sci.fits")[0], \
+                                  weight_img      = glob.glob(f"/FlashStorage/image/{field}/*{filter}*wht.fits")[0], \
+                                  output_cat      = f"/FlashStorage/catalog/{field}/{field}-{filter}-clear_drc_cat.fits", \
+                                  output_cat_star = f"/FlashStorage/catalog/{field}/{field}-{filter}-clear_drc_cat_star.fits", \
+                                  input_cat_star  = f"/FlashStorage/catalog/{field}/{field}_drc_cat_star.fits", \
+                                  config_file     = "/home/ec2-user/DAWN/DJA-SEpp/config/PSFEx-Cat-JWST.sex", \
+                                  params_file     = "/home/ec2-user/DAWN/DJA-SEpp/config/PSFEx-Cat-JWST-SW.param", \
+                                  dir_chckimg     = f"/FlashStorage/checkimages/{'/'.join(field.split('/')[:-1])}", \
+                                  detect_thresh = 2.5, \
+                                  save_chckimg = False, plot = False, clean = False, verbose = True)
     
 if __name__=="__main__":
     main()
