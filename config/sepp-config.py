@@ -185,7 +185,8 @@ if fit_case == "sersic_full_assoc" :
     x = FreeParameter(lambda o: o.centroid_x, coord_param_range) 
     y = FreeParameter(lambda o: o.centroid_y, coord_param_range) 
     
-    rad = FreeParameter(lambda o: 1.3*o.assoc_value_5, Range(lambda v, o: (v*0.01, 5*v), RangeType.EXPONENTIAL))
+    # rad = FreeParameter(lambda o: 1.3*o.assoc_value_5, Range(lambda v, o: (v*0.01, 5*v), RangeType.EXPONENTIAL))
+    rad = FreeParameter(lambda o: 1.3*o.assoc_value_5, Range(lambda v, o: (v*0.01, 100*v), RangeType.EXPONENTIAL))
     
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
     add_prior( lrd, 0.027/0.03,  0.5) 
