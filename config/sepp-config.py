@@ -238,6 +238,7 @@ if fit_case == "sersic_full_assoc" :
         print(band)
         
         flux[i] = FreeParameter(lambda o: o.assoc_value_3)
+        # flux[i] = FreeParameter(lambda o, zp=mag_zeropoint[band]: 10**(0.4*(zp - o.assoc_value_4)))
         mag[i] = DependentParameter(lambda f, zp=mag_zeropoint[band]: -2.5 * np.log10(f) + zp, flux[i] )
         
         # the centroid is fixed for all bands
