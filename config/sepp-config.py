@@ -57,11 +57,16 @@ mag_zeropoint = {'F090W': 28.90,
                  'F182M': 28.90,
                  'F200W': 28.90,
                  'F210M': 28.90,
+                 'F250M': 28.90,
                  'F277W': 28.90,
+                 'F300M': 28.90,
                  'F335M': 28.90,
                  'F356W': 28.90,
                  'F410M': 28.90,
-                 'F444W': 28.90}
+                 'F430M': 28.90,
+                 'F444W': 28.90,
+                 'F460M': 28.90,
+                 'F480M': 28.90,}
 
 list_of_IMG_names = list( map( lambda x: x, list_of_IMG_names) )
 list_of_WHT_names = list( map( lambda x: x, list_of_WHT_names) )
