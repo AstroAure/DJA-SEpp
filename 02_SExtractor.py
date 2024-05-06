@@ -4,7 +4,6 @@ from astropy.io import fits
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astropy.table import Table
-import astromatic_wrapper as aw
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
@@ -21,6 +20,19 @@ def run_sextractor(detect_img      : str, weight_img   : str,
                    detect_thresh   : float = 12.0,
                    analysis_thresh : float = 2.5,
                    verbose         : bool = False) -> None :
+    """
+    Run SExtractor to create a FITS_LDAC catalog, with vignets to create a PSF.
+
+    detect_img : filename of the detection image to use
+    weight_img : filename of the weight map
+    output_cat : filename of the output catalog
+    config_file : filename of the SExtractor configuration file
+    params_file : filename of the SExtarctor parameters file
+    dir_chckimg : path to folder to save checkimages (will be created if non-existing)
+    detect_thresh : value of the DETECT_THRESH to use
+    analysis_thresh : value of the ANALYSIS_THRESH to use
+    verbose : verbose parameter
+    """
     os.makedirs("/".join(output_cat.split("/")[:-1]), exist_ok=True)
     os.makedirs(dir_chckimg, exist_ok=True)
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
@@ -38,6 +50,13 @@ def run_sextractor(detect_img      : str, weight_img   : str,
     return output_cat
     
 def show_vignets(data, grid_n):
+    """
+    Display random vignets from a SExtractor catalog
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    grid_n : tuple (a,b) defining the number of rows and columns of the vignets grid
+    """
     n = len(data)
     a, b = grid_n
     selected = rd.sample(range(n), a*b)
@@ -51,9 +70,20 @@ def show_vignets(data, grid_n):
     plt.show()
 
 def plot_MuvMAG(data, star_selections=[], mag_bounds=(17,30), mu_bounds=(13,25), ax_custom=None):
-    # star_selection = {<name> : {'label':<label>, 'color':<color>, 'flag':<array_of_indices>}}
-    # MU_MAX = max pixel value in mag/arcsec² (MAG_ZEROPOINT - 2.5*log10(FLUX_MAX*PIXELSCALE²))
-    # MAG_AUTO = total flux in mag (MAG_ZEROPOINT - 2.5*log10(FLUX_AUTO))
+    """
+    Plots MU_MAX v. MAG_AUTO, with selections overlayed
+    MU_MAX = max pixel value in mag/arcsec² (MAG_ZEROPOINT - 2.5*log10(FLUX_MAX*PIXELSCALE²))
+    MAG_AUTO = total flux in mag (MAG_ZEROPOINT - 2.5*log10(FLUX_AUTO))
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    star_selections : list of dictionary of the form below to define selections
+        {<name> : {'label':<label>, 'color':<color>, 'flag':<array_of_indices>}}
+    mag_bounds : bounds for MAG_AUTO for the plot
+    mu_bounds : bounds for MU_MAX for the plot
+    ax_custom : matplotlib.pyplot.Axes to display the plot.
+                If ommited, the function will create a new plot
+    """
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
     ax.hexbin(data['MAG_AUTO'], data['MU_MAX'], bins='log', mincnt=1, extent=(mag_bounds[0],mag_bounds[1],mu_bounds[0],mu_bounds[1]), cmap='inferno', lw=0.01)
     # ax.plot(data['MAG_AUTO'], data['MU_MAX'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
@@ -70,6 +100,17 @@ def plot_MuvMAG(data, star_selections=[], mag_bounds=(17,30), mu_bounds=(13,25),
     if ax_custom is None: plt.show()
 
 def hist_CLASS_STAR(data, star_selections=[], hist_bound=500, ax_custom=None):
+    """
+    Plot a histogram of CLASS_STAR, with selections overlayed
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    star_selections : list of dictionary of the form below to define selections
+        {<name> : {'label':<label>, 'color':<color>, 'flag':<array_of_indices>}}
+    hist_bounds : bounds for the number of counts
+    ax_custom : matplotlib.pyplot.Axes to display the plot.
+                If ommited, the function will create a new plot
+    """
     # star_selection = {<name> : {'label':<label>, 'color':<color>, 'flag':<array_of_indices>}}
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
     ax.hist(data['CLASS_STAR'], bins=100, color='k', label=f'All [{len(data)}]')
@@ -83,6 +124,17 @@ def hist_CLASS_STAR(data, star_selections=[], hist_bound=500, ax_custom=None):
     if ax_custom is None: plt.show()
 
 def plot_SNR_radius(data, star_selections=[], rad_bound=20, ax_custom=None):
+    """
+    Plots SNR_WIN v. FLUX_RADIUS, with selections overlayed
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    star_selections : list of dictionary of the form below to define selections
+        {<name> : {'label':<label>, 'color':<color>, 'flag':<array_of_indices>}}
+    rad_bound : maximum value for FLUX_RADIUS
+    ax_custom : matplotlib.pyplot.Axes to display the plot.
+                If ommited, the function will create a new plot
+    """
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
     ax.hexbin(data['FLUX_RADIUS'], data['SNR_WIN'], bins='log', mincnt=1, yscale='log', extent=(0,rad_bound,0,6), cmap='inferno', lw=0.01)
     # ax.plot(data['FLUX_RADIUS'], data['SNR_WIN'], marker='o', ms=0.5, ls="", alpha=0.5, c='k', label=f'All [{len(data)}]', rasterized=True)
@@ -101,8 +153,15 @@ def plot_SNR_radius(data, star_selections=[], rad_bound=20, ax_custom=None):
 def plot_MuvMAG_manual(data, mag_bounds=(19,28), 
                        ax_custom=None, plot_mag_bounds=(18,30), plot_y_bounds=(-8,1)):
     """ 
-    Plots MU_MAX-MAG_AUTO v. MAG_AUTO with
-    guides to manually select the star line.
+    Plots MU_MAX-MAG_AUTO v. MAG_AUTO with guides to manually select the star line
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    mag_bounds : bounds for MAG_AUTO for the point-like sources selection
+    plot_mag_bounds : bounds for MAG_AUTO for the plot
+    plot_y_bounds : bounds for (MU_MAX-MAG_AUTO) for the plot
+    ax_custom : matplotlib.pyplot.Axes to display the plot.
+                If ommited, the function will create a new plot
     """
     ax = plt.subplots(figsize=(8,6))[1] if ax_custom is None else ax_custom
     ax.hexbin(data['MAG_AUTO'], data['MU_MAX'], bins='log', mincnt=1, extent=(plot_mag_bounds[0],plot_mag_bounds[1],plot_y_bounds[0],plot_y_bounds[1]), cmap='inferno', lw=0.01)
@@ -126,6 +185,20 @@ def find_star_line(data, eps_DBSCAN=0.1, y_max=-4, mag_fit=25, verbose=False,
     2. RANSAC regression to find the star line on the remaining points,
         and with MU_MAX-MAG_AUTO < y_max
     3. Calculates the star line position at MAG_AUTO = mag_fit
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    eps_DBSCAN : epsilon parameter for DBSCAN (the higher, the bigger the selected cluster is)
+    y_max : MU_MAX-MAG_AUTO threshold for linear regression
+    mag_fit : value of MAG_AUTO to calculate the star line position after linear regression
+    verbose : verbose parameter
+    plot : parameter to display plot to check if everything worked well
+    plot_mag_bounds : bounds for MAG_AUTO for the plot
+    plot_y_bounds : bounds for (MU_MAX-MAG_AUTO) for the plot
+    save : parameter to save the plot to check if everything worked well
+    save_name : filename for the saved plot. Mandatory if save==True
+
+    Returns : value of the star line (MU_MAX - MAG_AUTO)
     """
     # Remove galaxy cluster
     values = np.vstack([data['MAG_AUTO'], data['MU_MAX']-data['MAG_AUTO']])
@@ -160,10 +233,21 @@ def MUvMAG_star_selection(data, star_line, y_offsets=(-0.5,0.3), mag_bounds=(19,
                           plot=False, plot_mag_bounds=(18,30), plot_y_bounds=(-8,1),
                           save=False, save_name=None):
     """
-    Selects the stars according to the MU_MAX v. MAG_AUTO box.
-    star_line : Star line value of MU_MAX - MAG_AUTO
-    y_offsets : Negative and positive offsets from star_line for the selection box
+    Selects the point-like sources according to the MU_MAX v. MAG_AUTO box
+
+    data : data contained in the SExtractor catalog.
+           Can be created with astropy.io.fits.open and by selecting hdu.data
+    star_line : star line value of MU_MAX - MAG_AUTO
+    y_offsets : negative and positive offsets from star_line for the selection box
     mag_bounds : MAG_AUTO bounds for the selection box
+    snr_min : minimum value for SNR_WIN to select the sources
+    plot : parameter to display plot to check if everything worked well
+    plot_mag_bounds : bounds for MAG_AUTO for the plot
+    plot_y_bounds : bounds for (MU_MAX-MAG_AUTO) for the plot
+    save : parameter to save the plot to check if everything worked well
+    save_name : filename for the saved plot. Mandatory if save==True
+
+    Returns : indices of the detected point-like sources in data
     """
     if plot | save:
         fig, ax = plt.subplots(figsize=(8,6))
@@ -187,6 +271,14 @@ def MUvMAG_star_selection(data, star_line, y_offsets=(-0.5,0.3), mag_bounds=(19,
     return star_MUvMAG
 
 def save_catalog(hdul, selection, outcat_name):
+    """
+    Save selection as a FITS_LDAC catalog
+
+    hdul : HDU list from the original FITS_LDAC.
+           Obtained with astropy.io.fits.open
+    selection : indices of the rows of the catalog to save
+    outcat_name : filename of the saved catalog
+    """
     hdul[2].data = hdul[2].data[selection]
     hdul[2].update_header()
     hdul.writeto(outcat_name, overwrite=True)
@@ -209,31 +301,58 @@ def extract_stars(detect_img        : str,
                   plot_mag_bounds   : tuple = (18,30),
                   plot_mu_bounds    : tuple = (13,25), 
                   plot_y_bounds     : tuple = (-8,1),
-                  plot_rad_bounds   : tuple = 20,
+                  plot_rad_bound    : tuple = 20,
                   save_chckimg      : bool = True,
                   plot              : bool = False,
                   clean             : bool = True,
                   run_sex           : bool = True,
                   verbose           : bool = False) -> None :
+    """
+    Create a point-like sources catalog from an image to be used
+    in PSFEx to create the PSF of a telescope.
+    
+    detect_img : filename of the detection image to use
+    weight_img : filename of the weight map
+    output_cat : filename of the output full catalog
+    output_cat_star : filename of the output point-like sources catalog
+    config_file : filename of the SExtractor configuration file
+    params_file : filename of the SExtarctor parameters file
+    dir_chckimg : path to folder to save checkimages (will be created if non-existing)
+    detect_thresh : value of the DETECT_THRESH to use
+    analysis_thresh : value of the ANALYSIS_THRESH to use
+    eps_DBSCAN : epsilon parameter for DBSCAN (the higher, the bigger the selected cluster is)
+    y_max : MU_MAX-MAG_AUTO threshold for linear regression
+    mag_fit : value of MAG_AUTO to calculate the star line position after linear regression
+    y_offsets : negative and positive offsets from star_line for the selection box
+    mag_bounds : MAG_AUTO bounds for the selection box
+    snr_min : minimum value for SNR_WIN to select the sources
+    plot_mag_bounds : bounds for MAG_AUTO for the plots
+    plot_mu_bounds : bounds for MU_MAX for the plots
+    plot_y_bounds : bounds for (MU_MAX-MAG_AUTO) for the plots
+    plot_rad_bound : maximum value for FLUX_RADIUS for the plots
+    save_chckimg : parameter to save plots to check if everything worked well
+    plot : parameter to display plots to check if everything worked well
+    clean : delete the full catalog created by SExtractor at the end
+    run_sex : run SExtractor. Can be set to False if you already have a FITS_LDAC catalog
+    verbose : verbose parameter
+    """
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     hdul = fits.open(output_cat)
     data = hdul[2].data
-    # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
     star_line = find_star_line(data, eps_DBSCAN, y_max, mag_fit, verbose, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starDetect_{study_name}.png")
     star_MUvMAG = MUvMAG_star_selection(data, star_line, y_offsets, mag_bounds, snr_min, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starLine_{study_name}.png")
     if plot | save_chckimg:
         star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'r', 'flag': star_MUvMAG}}
         fig, ax = plt.subplots(1,2,figsize=(12,6))
         plot_MuvMAG(data, star_selections, plot_mag_bounds, plot_mu_bounds, ax_custom=ax[0])
-        plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
+        plot_SNR_radius(data, star_selections, plot_rad_bound, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
     if clean: os.remove(output_cat)
     if clean: os.remove(f"{dir_chckimg}/{study_name}_seg.fits")
     save_catalog(hdul, star_MUvMAG, output_cat_star)
     hdul.close()
-    # aw.utils.ldac.save_table_as_ldac(Table(data[star_MUvMAG]), output_cat_star, overwrite=True)
 
 def extract_stars_catalog(detect_img        : str, 
                           weight_img        : str,
@@ -248,12 +367,37 @@ def extract_stars_catalog(detect_img        : str,
                           max_sep           : u.Quantity = 1.0*u.arcsec,
                           plot_mag_bounds   : tuple = (18,30),
                           plot_mu_bounds    : tuple = (13,25),
-                          plot_rad_bounds   : tuple = 20, 
+                          plot_rad_bound   : tuple = 20, 
                           save_chckimg      : bool = True,
                           plot              : bool = False,
                           clean             : bool = True,
                           run_sex           : bool = True,
                           verbose           : bool = False) -> None:
+    """
+    Create a point-like sources catalog from an image and a previous
+    point-like sources catalog (e.g. from another band)to be used 
+    in PSFEx to create the PSF of a telescope.
+    
+    detect_img : filename of the detection image to use
+    weight_img : filename of the weight map
+    output_cat : filename of the output full catalog
+    output_cat_star : filename of the output point-like sources catalog
+    input_cat_star : filename of the input point-like sources catalog
+    config_file : filename of the SExtractor configuration file
+    params_file : filename of the SExtarctor parameters file
+    dir_chckimg : path to folder to save checkimages (will be created if non-existing)
+    detect_thresh : value of the DETECT_THRESH to use
+    analysis_thresh : value of the ANALYSIS_THRESH to use
+    max_sep : maximum angular separation for sources cross-match
+    plot_mag_bounds : bounds for MAG_AUTO for the plots
+    plot_mu_bounds : bounds for MU_MAX for the plots
+    plot_rad_bound : maximum value for FLUX_RADIUS for the plots
+    save_chckimg : parameter to save plots to check if everything worked well
+    plot : parameter to display plots to check if everything worked well
+    clean : delete the full catalog created by SExtractor at the end
+    run_sex : run SExtractor. Can be set to False if you already have a FITS_LDAC catalog
+    verbose : verbose parameter
+    """
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     if verbose: print ("Opening star catalogs")
@@ -261,8 +405,6 @@ def extract_stars_catalog(detect_img        : str,
     data = hdul[2].data
     with fits.open(input_cat_star, memmap=True, mode='denywrite') as hdul_star: 
         data_star = hdul_star[2].data
-    # data = aw.utils.ldac.get_table_from_ldac(output_cat, frame=1)
-    # data_star = aw.utils.ldac.get_table_from_ldac(input_cat_star, frame=1)
     coord = SkyCoord(data['ALPHA_J2000'][:], data['DELTA_J2000'][:], unit='deg', frame='icrs')
     coord_star = SkyCoord(data_star['ALPHA_J2000'], data_star['DELTA_J2000'], unit='deg', frame='icrs')
     if verbose: print("Matching stars")
@@ -273,39 +415,17 @@ def extract_stars_catalog(detect_img        : str,
         star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'r', 'flag': match}}
         fig, ax = plt.subplots(1,2,figsize=(12,6))
         plot_MuvMAG(data, star_selections, plot_mag_bounds, plot_mu_bounds, ax_custom=ax[0])
-        plot_SNR_radius(data, star_selections, plot_rad_bounds, ax_custom=ax[1])
+        plot_SNR_radius(data, star_selections, plot_rad_bound, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
     if clean: os.remove(output_cat)
     save_catalog(hdul, match, output_cat_star)
     hdul.close()
     # hdul_star.close()
-    # aw.utils.ldac.save_table_as_ldac(Table(data[match]), output_cat_star, overwrite=True)
 
 
 def main():
-    # extract_stars(detect_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_sci.fits", \
-    #               weight_img      = "/home/aurelien/DAWN/DJA_SE++/image/GDS/gds-grizli-v7.0-f444w-clear_drc_wht.fits", \
-    #               output_cat      = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat.fits", \
-    #               output_cat_star = "/home/aurelien/DAWN/DJA_SE++/JADES-catalog/gdn-grizli-v7.0-f444w-clear_drc_cat_star.fits", \
-    #               config_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST.sex", \
-    #               params_file     = "/home/aurelien/DAWN/DJA_SE++/config/PSFEx-Cat-JWST-SW.param", \
-    #               dir_chckimg     = "/home/aurelien/DAWN/DJA_SE++/JADES-checkimages", \
-    #               y_max = -4.5, \
-    #               save_chckimg = True, plot = False, verbose = True)
-
-    field = 'GDS'
-    filter = 'f200w'
-    extract_stars_catalog(detect_img      = glob.glob(f"/FlashStorage/image/{field}/*{filter}*sci.fits")[0], \
-                                  weight_img      = glob.glob(f"/FlashStorage/image/{field}/*{filter}*wht.fits")[0], \
-                                  output_cat      = f"/FlashStorage/catalog/{field}/{field}-{filter}-clear_drc_cat.fits", \
-                                  output_cat_star = f"/FlashStorage/catalog/{field}/{field}-{filter}-clear_drc_cat_star.fits", \
-                                  input_cat_star  = f"/FlashStorage/catalog/{field}/{field}_drc_cat_star.fits", \
-                                  config_file     = "/home/ec2-user/DAWN/DJA-SEpp/config/PSFEx-Cat-JWST.sex", \
-                                  params_file     = "/home/ec2-user/DAWN/DJA-SEpp/config/PSFEx-Cat-JWST-SW.param", \
-                                  dir_chckimg     = f"/FlashStorage/checkimages/{'/'.join(field.split('/')[:-1])}", \
-                                  detect_thresh = 2.5, \
-                                  save_chckimg = False, plot = False, clean = False, verbose = True)
+    pass
     
 if __name__=="__main__":
     main()
