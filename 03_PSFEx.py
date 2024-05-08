@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import SymLogNorm
 from astropy.io import fits
 
+# To work, this file requires you to have PSFEx installed on your machine.
+
 def run_psfex(cat_name, 
               output_cat, 
               dir_chckimg, dir_psfex, 

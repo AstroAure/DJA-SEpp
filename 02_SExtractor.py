@@ -13,6 +13,9 @@ import random as rd
 from sklearn.cluster import DBSCAN
 from sklearn.linear_model import RANSACRegressor
 
+
+# To work, this file requires you to have SExtractor installed on your machine.
+
 def run_sextractor(detect_img      : str, weight_img   : str, 
                    output_cat      : str, 
                    config_file     : str, params_file  : str,

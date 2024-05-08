@@ -8,10 +8,9 @@ This project looks into implementing SourceXtractor++ on the [DAWN JWST Archive]
 
 0. *(optional)* Cutouts in the image : [`00.2_Cutout.ipynb`](00.2_Cutout.ipynb)
 1. Detect point-like sources with the F200W band + create the PSF for every band : [`03.1_SingleBand-PSF.ipynb`](03.1_SingleBand-PSF.ipynb)
-2. Create association catalog and segmentation map based on the DJA catalog : [`04.1_AssociationCatalog.ipynb`](04.1_AssociationCatalog.ipynb)
-3. Run SourceXtractor++ in association mode : [`04.2_SE++Assoc.ipynb`](04.2_SE++Assoc.ipynb)
+2. Run SourceXtractor++ in detection mode : [`04_SE++.ipynb`](04_SE++.ipynb)
+3. Compare the results to the DJA : [`06_Validation.ipynb`](06_Validation.ipynb)
 4. View and analyse the results : [`05_Analysis.ipynb`](05_Analysis.ipynb)
-5. Compare the results to the DJA : [`06_Validation.ipynb`](06_Validation.ipynb)
 
 ## Dependencies
 
@@ -19,4 +18,3 @@ This project looks into implementing SourceXtractor++ on the [DAWN JWST Archive]
 * [PSFEx](https://www.astromatic.net/software/psfex/)
 * [SourceXtractor++](https://github.com/astrorama/SourceXtractorPlusPlus)
 * [Astropy](https://www.astropy.org/index.html)
-* [Astromatic-wrapper](https://astromatic-wrapper.readthedocs.io/en/latest/index.html)
