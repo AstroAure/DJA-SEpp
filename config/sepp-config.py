@@ -29,8 +29,6 @@ def str2dict(str_dict):
 args = str2dict(sys.argv[1])
 
 ##### THESE NEXT LINES DO SOME MORE CONFIGURATION #######
-# fit_case = 'sersic_rg4' # this defines which model we want to fit
-# fit_case = 'sersic_full_assoc' # this defines which model we want to fit
 fit_case = args['fit_case']
 
 set_engine('levmar')
@@ -43,10 +41,6 @@ set_meta_iteration_stop(0.02)  ## increase -> faster!
 ###################################################################################
 ################################ LOAD IMAGES ######################################
 
-# field = 'CEERS'
-# list_of_IMG_names = glob(f"/home/aurelien/DAWN/DJA_SE++/image/{field}/cutout-small/*clear*sci*.fits")
-# list_of_WHT_names = glob(f"/home/aurelien/DAWN/DJA_SE++/image/{field}/cutout-small/*clear*wht*.fits")
-# list_of_PSF_names = glob(f"/home/aurelien/DAWN/DJA_SE++/psfex/{field}/*star_psf.psf")
 list_of_IMG_names = args['list_of_IMG_names']
 list_of_WHT_names = args['list_of_WHT_names']
 list_of_PSF_names = args['list_of_PSF_names']
@@ -106,7 +100,9 @@ mesgroup = MeasurementGroup(imgroup)
 
 ###################################################################################
 ################################ DEFINE MODELS ####################################
-if fit_case == "sersic_rg4" :
+
+### Sersic profile (detection mode)
+if fit_case == "sersic_rg4" : 
     
     x,y = get_pos_parameters()
     
@@ -115,14 +111,9 @@ if fit_case == "sersic_rg4" :
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
     add_prior( lrd, 0.027/0.03,  0.5) 
     
-    if False:
-        sersic = FreeParameter( 2.0, Range((0.3, 8.0), RangeType.LINEAR))
-        X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
-        add_prior( X_sersic, -0.8, 1.5 )
-    if True:
-        sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
-        X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
-        add_prior( X_sersic, -2.5, 1.5 )
+    sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
+    X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
+    add_prior( X_sersic, -2.5, 1.5 )
 
     e1 = FreeParameter( 0.0, Range((-0.9999, 0.9999), RangeType.LINEAR))
     e2 = FreeParameter( 0.0, Range((-0.9999, 0.9999), RangeType.LINEAR))
@@ -132,7 +123,6 @@ if fit_case == "sersic_rg4" :
     add_prior( e1, 0.0, 0.25 )
     add_prior( e2, 0.0, 0.25 )
 
-    
     ra, dec, wc_rad, wc_angle, wc_ratio = get_world_parameters(x, y, rad, angle, ratio)
     
     add_output_column('X_MODEL', x)
@@ -150,7 +140,6 @@ if fit_case == "sersic_rg4" :
     add_output_column('DET-IMG_RADIUS', rad)
     add_output_column('DET-IMG_AXRATIO', ratio)
     add_output_column('DET-IMG_ANGLE', angle)
-
 
     i = 0
     flux = {}
@@ -174,6 +163,7 @@ if fit_case == "sersic_rg4" :
         add_output_column(f'FLUX_MODEL_{band}', flux[i])
         i+=1
 
+### Sersic profile (association mode)
 if fit_case == "sersic_full_assoc" :
     # 1  : x           -> o.centroid_x
     # 2  : y           -> o.centroid_y
@@ -196,7 +186,6 @@ if fit_case == "sersic_full_assoc" :
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
     add_prior( lrd, 0.027/0.03,  0.5) 
 
-    
     if True:
         sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
         X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
@@ -254,7 +243,6 @@ if fit_case == "sersic_full_assoc" :
         add_output_column(f'MAG_MODEL_{band}', mag[i])
         add_output_column(f'FLUX_MODEL_{band}', flux[i])
         i+=1
-
 
 # we can print some info about the models        
 print_model_fitting_info(mesgroup, show_params=True, prefix='')
