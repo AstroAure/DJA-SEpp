@@ -84,13 +84,13 @@ mesgroup = MeasurementGroup(imgroup)
 
 ###################################################################################
 ########################### RUN APERTURE PHOTOMETRY ###############################
-# all_apertures = []
-# pix_diameter = 25 # pixels
+all_apertures = []
+pix_diameter = 25 # pixels
 
-# # loop over every band in the measurement image group and measure aperture photometry in each
-# for band,img in mesgroup:
-#     all_apertures.extend(add_aperture_photometry(img, pix_diameter) )
-# add_output_column('APER', all_apertures)
+# loop over every band in the measurement image group and measure aperture photometry in each
+for band,img in mesgroup:
+    all_apertures.extend(add_aperture_photometry(img, pix_diameter) )
+add_output_column('APER', all_apertures)
 ###################################################################################
 ###################################################################################
 

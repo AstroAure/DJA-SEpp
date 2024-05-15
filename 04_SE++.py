@@ -2,36 +2,82 @@ import os
 import glob
 import re
 import sys
+from astropy.io import fits
+import numpy as np
 
-def run_sepp(python_config : str,
-             args : dict,
+def find_images(generic_img : str,
+                generic_wht : str,
+                generic_psf : str,
+                filter_list = None,
+                verbose : bool = False):
+    """Find the images, weight maps and PSFs according to generic names
+    
+    generic_img : generic filename for the images (can use *,? wildcards understandable by glob.glob)
+    generic_wht : generic filename for the weight maps (can use *,? wildcards understandable by glob.glob)
+    generic_psf : generic filename for the PSFs (can use *,? wildcards understandable by glob.glob)
+    filter_list (optional) : list of filters to find in the file names.
+        If set to None, will automatically be created by looking for f\d+\w+ Regex in images names
+    verbose (default, False)
+        
+    Returns : list of images names, list of weight maps names, list of PSFs names"""
+    images = glob.glob(generic_img)
+    weights = glob.glob(generic_wht)
+    psfs = glob.glob(generic_psf)
+    if filter_list is None:
+        filter_list = list(set([re.search('(f\d+\w+)', img).group(1) for img in images]))
+        filter_list.sort()
+    images = [[file for file in images if filter in file][0] for filter in filter_list]
+    for i, img in enumerate(images):
+        with fits.open(img, memmap=True) as hdul:
+            if np.max(hdul[0].data)==0.0:
+                blank_img = images.pop(i)
+                blank_filter = filter_list.pop(i)
+                print(f"Filter {blank_filter.upper()} is blank !! ({blank_img})")
+    weights = [[file for file in weights if filter in file][0] for filter in filter_list]
+    psfs = [[file for file in psfs if filter in file][0] for filter in filter_list]
+    return images, weights, psfs
+
+def run_sepp(detect_img : str,
+             generic_img : str,
+             generic_wht : str,
+             generic_psf : str,
              output_catname : str,
-             properties : str,
-             detect_img : str,
-             filt : str,
              checkimg_path : str,
-             thread_count : int,
-             tile_memory_limit : int,
-             tile_size : int):
+             python_config : str,
+             filt : str,
+             filter_list = None,
+             fit_case : str = 'sersic_rg4',
+             properties : str = 'PixelCentroid,WorldCentroid,SourceIDs,GroupInfo,GroupStamp,SourceFlags,NDetectedPixels,NCorePixel,AperturePhotometry,AutoPhotometry,FluxRadius,SNRRatio,ShapeParameters,FlexibleModelFitting',
+             thread_count : int = 128,
+             tile_memory_limit : int = 16384,
+             tile_size : int = 1000,
+             verbose : bool = True):
     """
     Run SourceXtractor++ on a given set of images
     
-    python_config : filename of the Python configuration file
-    args : dictionary of arguments to give to the configuration file.
-        It must contain at least :
-            - fit_case : the model for fitting in SE++
-            - list_of_IMG_names : list of images to use
-            - list_of_WHT_names : list of weight images to use
-            - list_of_PSF_names : list of PSF files to use
-    output_catname : filename of the output catalog
-    properties : SE++ properties to compute and export
     detect_img : filename of the detection image to use
-    filt : convolution filter to use for the detection
+    generic_img : generic filename for the images (can use *,? wildcards understandable by glob.glob)
+    generic_wht : generic filename for the weight maps (can use *,? wildcards understandable by glob.glob)
+    generic_psf : generic filename for the PSFs (can use *,? wildcards understandable by glob.glob)
+    output_catname : filename of the output catalog
     checkimg_path : path to the folder for the model and residual images
-    thread_count : number of threads to use for SE++
-    tile_memory_limit : maximum RAM allocated to SE++ (in MiB)
-    tile_size : size in px of the tiles created by SE++
+    python_config : filename of the Python configuration file
+    filt : convolution filter filename to use for the detection
+    filter_list (optional) : list of filters to find in the file names.
+        If set to None, will automatically be created by looking for f\d+\w+ Regex in images names
+    fit_case (default, sersic_rg4) : the model for fitting in SE++
+    properties (default, complete) : SE++ properties to compute and export
+    thread_count (default, 128) : number of threads to use for SE++
+    tile_memory_limit (default, 16384) : maximum RAM allocated to SE++ (in MiB)
+    tile_size (default, 1000) : size in px of the tiles created by SE++
+    verbose (default, True)
     """
+    images, weights, psfs = find_images(generic_img, generic_wht, generic_psf, filter_list, verbose)
+    args = {'fit_case' : fit_case,
+            'list_of_IMG_names' : images,
+            'list_of_WHT_names' : weights,
+            'list_of_PSF_names' : psfs
+            }
     os.makedirs(checkimg_path, exist_ok=True)
     os.environ['MKL_NUM_THREADS'] = '1'
     os.environ['MKL_DYNAMIC'] = 'FALSE'
@@ -74,93 +120,71 @@ def run_sepp(python_config : str,
             --tile-size {tile_size} \
             ")
 
-def main_tile(tile):
+def main_tile(tile, img_dir, sepp_dir, psf_dir, config_dir):
     # Python configuration file for SE++
-    python_config='/home/ec2-user/DAWN/DJA-SEpp/config/sepp-config.py'
-    # Field to run SE++ on (for file organization)
-    field = 'GDS'
+    python_config=f'{config_dir}/sepp-config.py'
     # Detection image
-    detect_img=glob.glob(f'/FlashStorage/image/{field}/tiles/*ir*sci*-{tile}.fits')[0]
+    detect_img=glob.glob(f'{img_dir}/*ir*sci*-{tile}.fits')[0]
     # Filter to use on the detection image
-    filt='/home/ec2-user/DAWN/DJA-SEpp/config/gauss_1.5_3x3.conv'
-    # Band filters to use for SE++ (here, automatically detected from the available images)
-    filter_list = list(set([re.search('(f\d+\w+)', filename).group(1) for filename in glob.glob(f"/FlashStorage/image/{field}/tiles/*clear*sci*-{tile}.fits")]))
-    filter_list.sort()
-    print(f"Filters : {filter_list}")
-    # Arguments to give to SE++ :
-    args = {'fit_case' : 'sersic_rg4',
-            'list_of_IMG_names' : [glob.glob(f"/FlashStorage/image/{field}/tiles/*{filter}*sci*-{tile}.fits")[0] for filter in filter_list],
-            'list_of_WHT_names' : [glob.glob(f"/FlashStorage/image/{field}/tiles/*{filter}*wht*-{tile}.fits")[0] for filter in filter_list],
-            'list_of_PSF_names' : [glob.glob(f"/home/ec2-user/DAWN/DJA-SEpp/psfex/{field}/*{filter}*star_psf.psf")[0] for filter in filter_list],
-            }
-    print(f"Images  : {args['list_of_IMG_names']}")
-    print(f"Weights : {args['list_of_WHT_names']}")
-    print(f"PSFs    : {args['list_of_PSF_names']}")
+    filt=f'{config_dir}/gauss_1.5_3x3.conv'
     # Output
-    output_dir = "/FlashStorage/sepp/tiles"
-    properties='PixelCentroid,WorldCentroid,SourceIDs,GroupInfo,GroupStamp,SourceFlags,NDetectedPixels,NCorePixel,AperturePhotometry,AutoPhotometry,FluxRadius,SNRRatio,ShapeParameters,FlexibleModelFitting'
     name = ".".join(detect_img.split("/")[-1].split(".")[:-1])
-    output_catname=f'{output_dir}/{field}/{name}_sepp_cat.fits'
-    checkimg_path=f'{output_dir}/{field}/checkimages'
+    output_catname=f'{sepp_dir}/{name}_sepp_cat.fits'
+    checkimg_path=f'{sepp_dir}/checkimages'
     os.makedirs(checkimg_path, exist_ok=True)
     # Run SE++
-    run_sepp(python_config=python_config, 
-             args=args, 
+    run_sepp(detect_img=detect_img,
+             generic_img=f"{img_dir}/*clear*sci*-{tile}.fits",
+             generic_wht=f"{img_dir}/*clear*wht*-{tile}.fits",
+             generic_psf=f"{psf_dir}/*star_psf.psf",
              output_catname=output_catname,
-             properties=properties,
-             detect_img=detect_img,
-             filt=filt,
              checkimg_path=checkimg_path,
+             python_config=python_config,
+             filt=filt,
+             filter_list = None,
+             fit_case='sersic_rg4',
+             properties='PixelCentroid,WorldCentroid,SourceIDs,GroupInfo,GroupStamp,SourceFlags,NDetectedPixels,NCorePixel,AperturePhotometry,AutoPhotometry,FluxRadius,SNRRatio,ShapeParameters,FlexibleModelFitting',
              thread_count=128,
              tile_memory_limit=16384,
-             tile_size=2000)
+             tile_size=2000,
+             verbose=True)
 
-def main_cutout():
-    ### Python configuration file for SE++
-    python_config='/home/ec2-user/DAWN/DJA-SEpp/config/sepp-config.py'
-    ### Field to run SE++ on (for file organization)
-    field = 'GDS'
-    ### Detection image
-    detect_img=glob.glob(f'/FlashStorage/image/{field}/cutout/*ir*sci_cutout.fits')[0]
-    ### Filter to use on the detection image
-    filt='/home/ec2-user/DAWN/DJA-SEpp/config/gauss_1.5_3x3.conv'
-    ### Band filters to use for SE++ (here, automatically detected from the available images)
-    filter_list = list(set([re.search('(f\d+\w+)', filename).group(1) for filename in glob.glob(f"/FlashStorage/image/{field}/cutout/*clear*sci*.fits")]))
-    filter_list.sort()
-    print(f"Filters : {filter_list}")
-    ### Arguments to give to SE++ :
-    ###       - fit_case : the model for fitting in SE++ (keep 'sersic_rg4' for detection mode)
-    ###       - list_of_IMG_names : list of images to use (here, automatically detected using 'filter_list')
-    ###       - list_of_WHT_names : list of weight images to use (here, automatically detected using 'filter_list')
-    ###       - list_of_PSF_names : list of PSF files to use (here, automatically detected using 'filter_list')
-    args = {'fit_case' : 'sersic_rg4',
-            'list_of_IMG_names' : [glob.glob(f"/FlashStorage/image/{field}/cutout/*{filter}*sci_cutout.fits")[0] for filter in filter_list],
-            'list_of_WHT_names' : [glob.glob(f"/FlashStorage/image/{field}/cutout/*{filter}*wht_cutout.fits")[0] for filter in filter_list],
-            'list_of_PSF_names' : [glob.glob(f"/home/ec2-user/DAWN/DJA-SEpp/psfex/{field}/*{filter}*star_psf.psf")[0] for filter in filter_list],
-            }
-    print(f"Images  : {args['list_of_IMG_names']}")
-    print(f"Weights : {args['list_of_WHT_names']}")
-    print(f"PSFs    : {args['list_of_PSF_names']}")
-    ### Output
-    output_dir = "/FlashStorage/sepp"
-    properties='PixelCentroid,WorldCentroid,SourceIDs,GroupInfo,GroupStamp,SourceFlags,NDetectedPixels,NCorePixel,AperturePhotometry,AutoPhotometry,FluxRadius,SNRRatio,ShapeParameters,FlexibleModelFitting'
+def main_run(img_dir, sepp_dir, psf_dir, config_dir):
+    # Python configuration file for SE++
+    python_config=f'{config_dir}/sepp-config.py'
+    # Detection image
+    detect_img=glob.glob(f'{img_dir}/*ir*sci*.fits')[0]
+    # Filter to use on the detection image
+    filt=f'{config_dir}/gauss_1.5_3x3.conv'
+    # Output
     name = ".".join(detect_img.split("/")[-1].split(".")[:-1])
-    output_catname=f'{output_dir}/{field}/{name}_sepp_cat.fits'
-    checkimg_path=f'{output_dir}/{field}/checkimages'
-    ### Run SE++
-    run_sepp(python_config=python_config, 
-             args=args, 
+    output_catname=f'{sepp_dir}/{name}_sepp_cat.fits'
+    checkimg_path=f'{sepp_dir}/checkimages'
+    os.makedirs(checkimg_path, exist_ok=True)
+    # Run SE++
+    run_sepp(detect_img=detect_img,
+             generic_img=f"{img_dir}/*clear*sci*.fits",
+             generic_wht=f"{img_dir}/*clear*wht*.fits",
+             generic_psf=f"{psf_dir}/*star_psf.psf",
              output_catname=output_catname,
-             properties=properties,
-             detect_img=detect_img,
-             filt=filt,
              checkimg_path=checkimg_path,
+             python_config=python_config,
+             filt=filt,
+             filter_list = None,
+             fit_case='sersic_rg4',
+             properties='PixelCentroid,WorldCentroid,SourceIDs,GroupInfo,GroupStamp,SourceFlags,NDetectedPixels,NCorePixel,AperturePhotometry,AutoPhotometry,FluxRadius,SNRRatio,ShapeParameters,FlexibleModelFitting',
              thread_count=128,
              tile_memory_limit=16384,
-             tile_size=2000)
+             tile_size=2000,
+             verbose=True)
 
 def main():
-    main_tile(sys.argv[1])
+    tile = sys.argv[1]
+    img_dir = sys.argv[2] if len(sys.argv)>2 else "/home/ec2-user/DAWN/DJA-SEpp/image/GDS/cutout/tiles"
+    sepp_dir = sys.argv[3] if len(sys.argv)>3 else "/home/ec2-user/DAWN/DJA-SEpp/sepp/GDS/tiles"
+    psf_dir = sys.argv[4] if len(sys.argv)>4 else "/home/ec2-user/DAWN/DJA-SEpp/psfex/GDS"
+    config_dir = sys.argv[5] if len(sys.argv)>5 else "/home/ec2-user/DAWN/DJA-SEpp/config"
+    main_tile(tile, img_dir, sepp_dir, psf_dir, config_dir)
 
 if __name__=='__main__':
     main()
