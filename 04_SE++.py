@@ -2,6 +2,7 @@ import os
 import glob
 import re
 import sys
+import boto3
 from astropy.io import fits
 import numpy as np
 
@@ -119,6 +120,11 @@ def run_sepp(detect_img : str,
             --tile-memory-limit {tile_memory_limit} \
             --tile-size {tile_size} \
             ")
+    
+def save_s3(file, bucket, path):
+    s3 = boto3.client('s3')
+    name = file.split("/")[-1]
+    s3.upload_file(file, bucket, f"{path}/{name}")
 
 def main_tile(tile, img_dir, sepp_dir, psf_dir, config_dir):
     # Python configuration file for SE++
@@ -148,6 +154,8 @@ def main_tile(tile, img_dir, sepp_dir, psf_dir, config_dir):
              tile_memory_limit=16384,
              tile_size=2000,
              verbose=True)
+    # Save to S3
+    save_s3(output_catname, 'aurelien_sepp', 'sepp/GDS/tiles')
 
 def main_run(img_dir, sepp_dir, psf_dir, config_dir):
     # Python configuration file for SE++
