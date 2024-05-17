@@ -4,8 +4,8 @@
 
 This project looks into implementing SourceXtractor++ on the [DAWN JWST Archive](https://dawn-cph.github.io/dja/) (DJA). The DJA is a repository of public JWST galaxy data reduced and ready for science. This project aims at expanding the DJA with model fitting and more precise measurements on the different sets of photometric images.
 
-.. image:: https://badge.fury.io/py/dja_sepp.svg
-    :target: https://badge.fury.io/py/dja_sepp
+![PyPI - Version](https://img.shields.io/pypi/v/dja_sepp)
+
 
 ## Installation
 
