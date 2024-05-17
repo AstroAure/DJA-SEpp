@@ -1,3 +1,4 @@
+import importlib.resources
 import os
 import glob
 from typing import Union
@@ -5,7 +6,7 @@ import numpy as np
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
-from astropy.io import fits
+from astropy.io import fits, ascii
 from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
@@ -215,6 +216,7 @@ def plot_filters(ax, filter_list=None, scale=1, names=True,
     names : whether to display the names of the filters
     throughput_folder : folder with the throughput data downloaded from the JWST documentation
     """
+    throughput_folder = importlib.resources.files('dja_sepp').joinpath(throughput_folder)
     filter_list = [filter.lower() for filter in color_dict.keys()] if filter_list is None else filter_list
     for filter in filter_list:
         table = ascii.read(f"{throughput_folder}/{filter.upper()}_mean_system_throughput.txt")
@@ -261,3 +263,11 @@ def plot_photometric_spectrum(id, cat, filter_list, mag=False, custom_ax=None, t
         ax.set_ylabel(r"$F_{\nu}$ (nJy)")
     ax.set_title(title)
     if custom_ax is None: plt.show()
+
+def main():
+    fig, ax = plt.subplots(figsize=(12,5))
+    plot_filters(ax, ['f090w', 'f115w', 'f200w', 'f277w', 'f356w', 'f444w'])
+    plt.show()
+
+if __name__=="__main__":
+    main()

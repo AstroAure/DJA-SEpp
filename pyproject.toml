@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dja_sepp"
-version = "0.1.0"
+version = "0.1.7"
 authors = [
     {name="Aurélien Genin", email="aurelien.genin@polytechnique.org"}
 ]
@@ -28,3 +28,9 @@ dependencies = [
 [project.urls]
 Source = "https://github.com/AstroAure/DJA-SEpp"
 DJA = "https://dawn-cph.github.io/dja/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"dja_sepp.data" = ["**"]
