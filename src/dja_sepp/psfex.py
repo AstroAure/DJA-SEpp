@@ -50,7 +50,7 @@ def run_psfex(cat_name,
         fig, ax = plt.subplots(figsize=(6,6))
         ax.set_axis_off()
         ax.imshow(psf, origin='lower', cmap='bone_r', norm=SymLogNorm(linthresh=1e-5, linscale=0.8))
-        fig.savefig(f"{output_chk}_psf.png", bbox_inches='tight', pad_inches=0, dpi=60)
+        fig.savefig(f"{filename.replace('.psf','.png')}", bbox_inches='tight', pad_inches=0, dpi=60)
         if verbose: plt.show()
     return filename
     
