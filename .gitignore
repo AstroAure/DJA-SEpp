@@ -1,12 +1,6 @@
-catalog/
-image/
-sepp/
-checkimages/
-validation-images/
+dist/
+src/dja_sepp.egg-info/
 __pycache__/
-AWS-CLI-commands.md
-JADES-GS-z12-0.png
-JADES-GS-z13-0.png
-JADES-S_NIRCAM_long.png
-JADES-S_NIRCAM_short.png
-00_Tests.ipynb
+build_package.ipynb
+fields/
+notebooks/00_Tests.ipynb

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dja_sepp"
+version = "0.1.11"
+authors = [
+    {name="Aurélien Genin", email="aurelien.genin@polytechnique.org"}
+]
+description = "Package to run SourceXtractor++ on the DAWN JWST Archive"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "awscli",
+    "boto3",
+    "numpy",
+    "matplotlib",
+    "astropy",
+    "scikit-learn"
+]
+
+[project.urls]
+Source = "https://github.com/AstroAure/DJA-SEpp"
+DJA = "https://dawn-cph.github.io/dja/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"dja_sepp.data" = ["**"]
