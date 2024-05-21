@@ -182,7 +182,7 @@ if fit_case == "sersic_rg4" :
 
 ### Bulge + Disc (detection mode)
 if fit_case == "B+D":
-    det_pix_scale = 0.03
+    det_pix_scale = 0.04 # Pixel scale of detection image
     x,y = get_pos_parameters()
 
     r_b = FreeParameter(lambda o: o.radius, Range(lambda v,o: (0.001*v, 1.1*v), RangeType.EXPONENTIAL))

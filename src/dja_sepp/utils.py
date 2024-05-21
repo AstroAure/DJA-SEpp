@@ -54,7 +54,7 @@ filters_waveband = {'F090W': {'pivot': 0.901, 'band': 0.194},
                     'F480M': {'pivot': 4.834, 'band': 0.303},}
 # Source : https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-instrumentation/nircam-filters
 
-def add_good_scalebar(ax, wcs, color='white', fraction=0.25, corner='bottom right', pad=0.1):
+def add_good_scalebar(ax, wcs, color='white', fraction=0.25, corner='bottom right', pad=0.1, fontsize='x-large'):
     """
     Utility function for astropy.visualization.wcsaxes.add_scalebar
     to automaticaly resize the scalebar to the size of the image.
@@ -65,6 +65,7 @@ def add_good_scalebar(ax, wcs, color='white', fraction=0.25, corner='bottom righ
     fraction : fraction of the image to aim for the scale bar (will always be smaller)
     corner : where to place the scale bar
     pad : padding around the scale bar
+    fontsize : fontsize of the scale text
     """
     width = abs(proj_plane_pixel_scales(wcs)[0]*wcs.pixel_shape[0])*u.degree
     good_values = [0.5*u.arcsec, 1*u.arcsec, 2*u.arcsec, 3*u.arcsec, 5*u.arcsec, 10*u.arcsec, 20*u.arcsec,
@@ -73,7 +74,7 @@ def add_good_scalebar(ax, wcs, color='white', fraction=0.25, corner='bottom righ
     dist = np.array([(fraction*width-val).value for val in good_values])
     dist[dist<0] = np.inf
     size = good_values[np.argmin(dist)]
-    add_scalebar(ax, size, label=f"{size:latex}", color=color, fontproperties=FontProperties(size='x-large'), label_top=True, pad=pad, corner=corner)
+    add_scalebar(ax, size, label=f"{size:latex}", color=color, fontproperties=FontProperties(size=fontsize), label_top=True, pad=pad, corner=corner)
 
 def save_cutouts(generic_filename   : str, 
                  center             : Union[tuple[str],SkyCoord] , 
@@ -207,7 +208,7 @@ def show_source(id, cat, filter_list,
 def plot_filters(ax, filter_list=None, scale=1, names=True, 
                  throughput_folder="data/NIRCam_Filters-Throughput"):
     """
-    Plots filters throughput on ax
+    Plots normalized filter throughputs on ax
     Source : https://jwst-docs.stsci.edu/jwst-near-infrared-camera/nircam-instrumentation/nircam-filters
 
     ax : matplotlib.pyplot.Axes to plot on
@@ -234,6 +235,7 @@ def plot_photometric_spectrum(id, cat, filter_list, mag=False, custom_ax=None, t
 
     id : index of the source in cat
     cat : catalog from SE++
+    filter_list : list of the filters to plot
     mag : whether to plot the spectrum in AB mag or flux (default)
     custom_ax : matplotlib.pyplot.Axes to plot on.
                 By default, the function creates a new figure
@@ -263,6 +265,35 @@ def plot_photometric_spectrum(id, cat, filter_list, mag=False, custom_ax=None, t
         ax.set_ylabel(r"$F_{\nu}$ (nJy)")
     ax.set_title(title)
     if custom_ax is None: plt.show()
+
+def plot_group_filter(filter_list, plot_func, **kwargs):
+    """
+    Make plots for different filters
+
+    filter_list : list of filter names (in lowercase)
+    plot_func : function defining what to plot for one filter.
+            Its first two arguments must be a plt.Axes and the filter name
+    **kwargs : additionnal arguments to pass to plot_func
+
+    Returns : fig, axs of the figure
+    """
+    channel, count = np.unique([channel_dict[filter.upper()] for filter in filter_list], return_counts=True)
+    channel_count = dict(zip(channel, count))
+    w = min(5,channel_count[max(channel_count, key=channel_count.get)])
+    h = sum([-(channel_count[channel]//-w) for channel in channel_count])
+    fig, axs = plt.subplots(h,w,figsize=(3*w+1,3*h+1), sharex=True, sharey=True, gridspec_kw = {'wspace':0, 'hspace':0})
+    indices = [i for i in range(len(axs.flatten()))]
+    for i, filter in enumerate(filter_list):
+        if (len(channel_count)==2) & (channel_dict[filter.upper()]=="LW"):
+            mod = channel_count["SW"]%w
+            mod = w if mod==0 else mod
+            i += max(0, w-mod)
+        indices.remove(i)
+        ax = axs.flatten()[i] if type(axs)==np.ndarray else axs
+        plot_func(ax, filter, **kwargs)
+    for i in indices:
+        axs.flatten()[i].set_axis_off()
+    return fig, axs
 
 def main():
     fig, ax = plt.subplots(figsize=(12,5))

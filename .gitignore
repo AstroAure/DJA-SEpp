@@ -1,8 +1,6 @@
 dist/
 src/dja_sepp.egg-info/
-catalog/
-image/
-sepp/
-checkimages/
 __pycache__/
 build_package.ipynb
+fields/
+notebooks/00_Tests.ipynb

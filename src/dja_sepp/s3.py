@@ -30,7 +30,7 @@ def decompress_save(file_name:str,
     Downloads a compressed .gz file from an S3 bucket, 
     and saves a decompressed version to your computer.
 
-    file_name : Name of the compressed file (without .gz)
+    file_name : Name of the compressed file
     in_bucket : Bucket where the compressed file is
     in_path : Path in the in_bucket to the compressed file
     out_path : Path in your computer to save the decompressed file
@@ -38,16 +38,16 @@ def decompress_save(file_name:str,
     s3 = boto3.client('s3')
     os.makedirs(out_path, exist_ok=True)
     # Download compressed images from S3
-    if verbose: print(f"Downloading : https://s3.amazonaws.com/{in_bucket}/{in_path}/{file_name}.gz")
-    s3.download_file(in_bucket, f"{in_path}/{file_name}.gz", f"{out_path}/{file_name}.gz")
+    if verbose: print(f"Downloading : https://s3.amazonaws.com/{in_bucket}/{in_path}/{file_name}")
+    s3.download_file(in_bucket, f"{in_path}/{file_name}", f"{out_path}/{file_name}")
     # Decompress images
-    if verbose: print(f"Decompressing : {out_path}/{file_name}.gz")
-    with gzip.open(f"{out_path}/{file_name}.gz", 'rb') as image_gz:
-        with open(f"{out_path}/{file_name}", 'wb') as image_fits:
+    if verbose: print(f"Decompressing : {out_path}/{file_name}")
+    with gzip.open(f"{out_path}/{file_name}", 'rb') as image_gz:
+        with open(f"{out_path}/{file_name[:-3]}", 'wb') as image_fits:
             shutil.copyfileobj(image_gz, image_fits)
     # Delete compressed images
-    if verbose: print(f"Removing : {out_path}/{file_name}.gz")
-    os.remove(f"{out_path}/{file_name}.gz")
+    if verbose: print(f"Removing : {out_path}/{file_name}")
+    os.remove(f"{out_path}/{file_name}")
 
 def decompress_save_to_S3(file_name:str, 
                           in_bucket:str, in_path:str,
@@ -59,7 +59,7 @@ def decompress_save_to_S3(file_name:str,
     Downloads a compressed .gz file from an S3 bucket, 
     and saves a decompressed version in another S3 bucket.
 
-    file_name : Name of the compressed file (without .gz)
+    file_name : Name of the compressed file
     in_bucket : Bucket where the compressed file is
     in_path : Path in the in_bucket to the compressed file
     out_bucket : Bucket to save the decompressed file to
@@ -72,12 +72,12 @@ def decompress_save_to_S3(file_name:str,
                     in_bucket=in_bucket, in_path=in_path,
                     out_path=temp_folder, verbose=verbose)
     #Save decompressed images to S3
-    if verbose: print(f"Uploading : https://s3.amazonaws.com/{out_bucket}/{out_path}/{file_name}")
-    s3.upload_file(f"{temp_folder}/{file_name}", out_bucket, f"{out_path}/{file_name}")
+    if verbose: print(f"Uploading : https://s3.amazonaws.com/{out_bucket}/{out_path}/{file_name[:-3]}")
+    s3.upload_file(f"{temp_folder}/{file_name[:-3]}", out_bucket, f"{out_path}/{file_name[:-3]}")
     # Delete decompressed images
     if deleting_file:
-        if verbose: print(f"Removing : {temp_folder}/{file_name}")
-        os.remove(f"{temp_folder}/{file_name}")
+        if verbose: print(f"Removing : {temp_folder}/{file_name[:-3]}")
+        os.remove(f"{temp_folder}/{file_name[:-3]}")
 
 
 def save_s3(file, bucket, path):

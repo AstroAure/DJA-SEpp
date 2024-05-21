@@ -1,4 +1,5 @@
 import os
+import subprocess
 import glob
 import re
 import sys
@@ -85,42 +86,43 @@ def run_sepp(detect_img : str,
     os.environ['MKL_DYNAMIC'] = 'FALSE'
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['OMP_DYNAMIC'] = 'FALSE'
-    os.system(f"sourcextractor++ \
-            --python-config-file {python_config} \
-            --python-arg '{args}' \
-            --output-catalog-filename {output_catname} \
-            --output-properties {properties} \
-            --output-flush-size 10 \
-            --detection-image {detect_img} \
-            --weight-type WEIGHT \
-            --weight-absolute 0 \
-            --segmentation-filter {filt} \
-            --background-cell-size 128 \
-            --segmentation-algorithm LUTZ \
-            --smoothing-box-size 5 \
-            --detection-threshold 0.80 \
-            --detection-minimum-area 7 \
-            --partition-corethreshold yes \
-            --core-threshold-value 1.5 \
-            --core-minimum-area 9 \
-            --grouping-algorithm split \
-            --partition-multithreshold yes \
-            --partition-minimum-area 18 \
-            --grouping-hard-limit 0 \
-            --partition-minimum-contrast 0.0001 \
-            --partition-threshold-count 42 \
-            --use-cleaning yes \
-            --cleaning-minimum-area 15 \
-            --model-fitting-iterations 550 \
-            --sampling-scale-factor 1 \
-            --check-image-model-fitting {checkimg_path}/model.fits \
-            --check-image-residual {checkimg_path}/resid.fits \
-            --log-file {output_catname.replace('.fits', '.log')} \
-            --log-level DEBUG \
-            --thread-count {thread_count} \
-            --tile-memory-limit {tile_memory_limit} \
-            --tile-size {tile_size} \
-            ")
+    subprocess.run(f"sourcextractor++ \
+                   --python-config-file {python_config} \
+                   --python-arg '{args}' \
+                   --output-catalog-filename {output_catname} \
+                   --output-properties {properties} \
+                   --output-flush-size 10 \
+                   --detection-image {detect_img} \
+                   --weight-type WEIGHT \
+                   --weight-absolute 0 \
+                   --segmentation-filter {filt} \
+                   --background-cell-size 128 \
+                   --segmentation-algorithm LUTZ \
+                   --smoothing-box-size 5 \
+                   --detection-threshold 0.80 \
+                   --detection-minimum-area 7 \
+                   --partition-corethreshold yes \
+                   --core-threshold-value 1.5 \
+                   --core-minimum-area 9 \
+                   --grouping-algorithm split \
+                   --partition-multithreshold yes \
+                   --partition-minimum-area 18 \
+                   --grouping-hard-limit 0 \
+                   --partition-minimum-contrast 0.0001 \
+                   --partition-threshold-count 42 \
+                   --use-cleaning yes \
+                   --cleaning-minimum-area 15 \
+                   --model-fitting-iterations 550 \
+                   --sampling-scale-factor 1 \
+                   --check-image-model-fitting {checkimg_path}/model.fits \
+                   --check-image-residual {checkimg_path}/resid.fits \
+                   --log-file {output_catname.replace('.fits', '.log')} \
+                   --log-level DEBUG \
+                   --thread-count {thread_count} \
+                   --tile-memory-limit {tile_memory_limit} \
+                   --tile-size {tile_size} \
+                   ",
+                   shell=True)
 
 def main_tile(tile, img_dir, sepp_dir, psf_dir, config_dir):
     # Python configuration file for SE++

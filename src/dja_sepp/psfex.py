@@ -1,4 +1,5 @@
 import os
+import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import SymLogNorm
@@ -31,15 +32,16 @@ def run_psfex(cat_name,
     study_name = ".".join(cat_name.split("/")[-1].split(".")[:-1])
     output_chk = f"{dir_chckimg}/{study_name}"
     verbose_type = 'NORMAL' if verbose else 'QUIET'
-    os.system(f'psfex {cat_name} -c {config_file} \
-                -CHECKIMAGE_NAME {dir_chckimg}/chi2.fits,{dir_chckimg}/samp.fits,{dir_chckimg}/res.fits,{dir_chckimg}/snap.fits \
-                -CHECKPLOT_NAME {output_chk}_selfwhm,{output_chk}_chi2,{output_chk}_counts \
-                -XML_NAME {output_chk}_xml.xml \
-                -OUTCAT_NAME {output_cat}_psf_cat.fits \
-                -PSF_DIR {dir_psfex} \
-                -SAMPLE_FWHMRANGE "{fwhm_range}" \
-                -SAMPLE_MINSN {min_snr} \
-                -VERBOSE_TYPE {verbose_type}')
+    subprocess.run(f'psfex {cat_name} -c {config_file} \
+                   -CHECKIMAGE_NAME {dir_chckimg}/chi2.fits,{dir_chckimg}/samp.fits,{dir_chckimg}/res.fits,{dir_chckimg}/snap.fits \
+                   -CHECKPLOT_NAME {output_chk}_selfwhm,{output_chk}_chi2,{output_chk}_counts \
+                   -XML_NAME {output_chk}_xml.xml \
+                   -OUTCAT_NAME {output_cat}_psf_cat.fits \
+                   -PSF_DIR {dir_psfex} \
+                   -SAMPLE_FWHMRANGE "{fwhm_range}" \
+                   -SAMPLE_MINSN {min_snr} \
+                   -VERBOSE_TYPE {verbose_type}',
+                   shell=True)
     filename = f"{dir_psfex}/{study_name}_psf.psf"
     if save_psf_png:
         image = fits.open(filename)

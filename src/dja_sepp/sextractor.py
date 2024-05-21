@@ -1,4 +1,5 @@
 import os
+import subprocess
 import glob
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
@@ -13,12 +14,11 @@ import random as rd
 from sklearn.cluster import DBSCAN
 from sklearn.linear_model import RANSACRegressor
 
-
 # To work, this file requires you to have SExtractor installed on your machine.
 
 def run_sextractor(detect_img      : str, weight_img   : str, 
                    output_cat      : str, 
-                   config_file     : str, params_file  : str,
+                   config_folder   : str,
                    dir_chckimg     : str,
                    detect_thresh   : float = 12.0,
                    analysis_thresh : float = 2.5,
@@ -29,27 +29,36 @@ def run_sextractor(detect_img      : str, weight_img   : str,
     detect_img : filename of the detection image to use
     weight_img : filename of the weight map
     output_cat : filename of the output catalog
-    config_file : filename of the SExtractor configuration file
-    params_file : filename of the SExtarctor parameters file
+    config_folder : path to the SEtractor config filed folder
     dir_chckimg : path to folder to save checkimages (will be created if non-existing)
     detect_thresh : value of the DETECT_THRESH to use
     analysis_thresh : value of the ANALYSIS_THRESH to use
     verbose : verbose parameter
     """
+    # Find SExtractor installed version
+    cmd = ""
+    if subprocess.run('sex --version', shell=True, capture_output=True).returncode==0: cmd = "sex"
+    elif subprocess.run('source-extractor --version', shell=True, capture_output=True).returncode==0: cmd = "source-extractor"
+    else:
+        print("SExtractor not found ! Make sure it is installed.")
+        return None
     os.makedirs("/".join(output_cat.split("/")[:-1]), exist_ok=True)
     os.makedirs(dir_chckimg, exist_ok=True)
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
     seg_img = f'{dir_chckimg}/{study_name}_seg.fits'
     verbose_type = 'NORMAL' if verbose else 'QUIET'
     os.environ['LD_LIBRARY_PATH'] = '/usr/lib' # Link 'libcfitsio.so.10'
-    os.system(f'sex {detect_img} -c {config_file} \
-            -CATALOG_NAME {output_cat} \
-            -WEIGHT_IMAGE {weight_img} -WEIGHT_TYPE MAP_WEIGHT \
-            -PARAMETERS_NAME {params_file} \
-            -CHECKIMAGE_NAME {seg_img} \
-            -DETECT_THRESH {detect_thresh} \
-            -ANALYSIS_THRESH {analysis_thresh} \
-            -VERBOSE_TYPE {verbose_type}')
+    subprocess.run(f'{cmd} {detect_img} -c {config_folder}/PSFEx-Cat-JWST.sex \
+                   -CATALOG_NAME {output_cat} \
+                   -WEIGHT_IMAGE {weight_img} -WEIGHT_TYPE MAP_WEIGHT \
+                   -PARAMETERS_NAME {config_folder}/PSFEx-Cat-JWST-SW.param \
+                   -FILTER_NAME {config_folder}/gauss_1.5_3x3.conv \
+                   -STARNNW_NAME {config_folder}/default.nnw \
+                   -CHECKIMAGE_NAME {seg_img} \
+                   -DETECT_THRESH {detect_thresh} \
+                   -ANALYSIS_THRESH {analysis_thresh} \
+                   -VERBOSE_TYPE {verbose_type}',
+                   shell=True)
     return output_cat
     
 def show_vignets(data, grid_n):
@@ -290,8 +299,7 @@ def extract_stars(detect_img        : str,
                   weight_img        : str, 
                   output_cat        : str,
                   output_cat_star   : str, 
-                  config_file       : str, 
-                  params_file       : str,
+                  config_folder    : str,
                   dir_chckimg       : str,
                   detect_thresh     : float = 8.0,
                   analysis_thresh   : float = 2.5,
@@ -318,8 +326,7 @@ def extract_stars(detect_img        : str,
     weight_img : filename of the weight map
     output_cat : filename of the output full catalog
     output_cat_star : filename of the output point-like sources catalog
-    config_file : filename of the SExtractor configuration file
-    params_file : filename of the SExtarctor parameters file
+    config_folder : path to the SEtractor config filed folder
     dir_chckimg : path to folder to save checkimages (will be created if non-existing)
     detect_thresh : value of the DETECT_THRESH to use
     analysis_thresh : value of the ANALYSIS_THRESH to use
@@ -340,7 +347,7 @@ def extract_stars(detect_img        : str,
     verbose : verbose parameter
     """
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
-    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
+    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_folder, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     hdul = fits.open(output_cat)
     data = hdul[2].data
     star_line = find_star_line(data, eps_DBSCAN, y_max, mag_fit, verbose, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starDetect_{study_name}.png")
@@ -362,8 +369,7 @@ def extract_stars_catalog(detect_img        : str,
                           output_cat        : str, 
                           output_cat_star   : str,
                           input_cat_star    : str, 
-                          config_file       : str, 
-                          params_file       : str,
+                          config_folder     : str,
                           dir_chckimg       : str,
                           detect_thresh     : float = 2.5,
                           analysis_thresh   : float = 2.5,
@@ -386,8 +392,7 @@ def extract_stars_catalog(detect_img        : str,
     output_cat : filename of the output full catalog
     output_cat_star : filename of the output point-like sources catalog
     input_cat_star : filename of the input point-like sources catalog
-    config_file : filename of the SExtractor configuration file
-    params_file : filename of the SExtarctor parameters file
+    config_folder : path to the SEtractor config filed folder
     dir_chckimg : path to folder to save checkimages (will be created if non-existing)
     detect_thresh : value of the DETECT_THRESH to use
     analysis_thresh : value of the ANALYSIS_THRESH to use
@@ -402,7 +407,7 @@ def extract_stars_catalog(detect_img        : str,
     verbose : verbose parameter
     """
     study_name = '.'.join(detect_img.split('/')[-1].split('.')[:-1])
-    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_file, params_file, dir_chckimg, detect_thresh, analysis_thresh, verbose)
+    if run_sex: run_sextractor(detect_img, weight_img, output_cat, config_folder, dir_chckimg, detect_thresh, analysis_thresh, verbose)
     if verbose: print ("Opening star catalogs")
     hdul = fits.open(output_cat, memmap=True, mode='denywrite') 
     data = hdul[2].data
