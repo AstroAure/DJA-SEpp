@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+import fnmatch
 import glob
 from typing import Union
 import numpy as np
@@ -113,7 +114,11 @@ def save_cutouts(generic_filename   : str,
     if verbose: print(f"Images found :")
     if verbose: 
         for img in image_list: print(img)
-    if plot: fig, j = plt.figure(figsize=(12,12)), 1
+    if plot: 
+        len_plot = np.sum([fnmatch.fnmatch(img, plot_str) for img in image_list])
+        size_plot = 1
+        while size_plot*size_plot < len_plot: size_plot += 1
+        fig, j = plt.figure(figsize=(3*size_plot,3*size_plot)), 1
     for i,img in enumerate(image_list):
         print(f"Image {i+1} / {n}")
         # Load image
@@ -136,15 +141,17 @@ def save_cutouts(generic_filename   : str,
         hdu.writeto(f"{save_folder}/{name}", overwrite=True)
         # Plot cutout
         if plot:
-            if plot_str is None or plot_str in init_name:
-                ax = fig.add_subplot(max(1,int(np.sqrt(n))),max(1,int(np.sqrt(n))),j, projection=cutout.wcs)
+            if plot_str is None or fnmatch.fnmatch(img, plot_str):
+                ax = fig.add_subplot(size_plot,size_plot,j, projection=cutout.wcs)
                 norm = ImageNormalize(cutout.data, interval=ZScaleInterval())
                 ax.imshow(cutout.data, cmap='gray', origin='lower', norm=norm)
                 ax.set_title(init_name, size='xx-small')
                 ax.set_axis_off()
+                add_good_scalebar(ax, cutout.wcs)
                 j+=1
     if plot: fig.tight_layout()
     if plot: plt.show()
+    if plot: return fig
 
 def show_source(id, cat, filter_list,
                 data_folder,
@@ -204,6 +211,7 @@ def show_source(id, cat, filter_list,
     plt.figtext(0.0, 0.48, f"Source #{id}", figure=fig, va='center', ha='right', rotation='vertical', fontsize=24)
     fig.tight_layout()
     plt.show()
+    return fig
 
 def plot_filters(ax, filter_list=None, scale=1, names=True, 
                  throughput_folder="data/NIRCam_Filters-Throughput"):
@@ -242,7 +250,7 @@ def plot_photometric_spectrum(id, cat, filter_list, mag=False, custom_ax=None, t
     title : title to set for the plot
     """
 
-    ax = plt.subplots(figsize=(12,3))[1] if custom_ax is None else custom_ax
+    fig, ax = plt.subplots(figsize=(12,3)) if custom_ax is None else (None, custom_ax)
     # DJA images pixel value are in 10 nJy
     flux_target = [10*cat[id-1][f"FLUX_MODEL_{filter.upper()}"] for filter in filter_list]
     flux_err_target = [10*cat[id-1][f"FLUX_MODEL_{filter.upper()}_err"] for filter in filter_list]
@@ -265,6 +273,7 @@ def plot_photometric_spectrum(id, cat, filter_list, mag=False, custom_ax=None, t
         ax.set_ylabel(r"$F_{\nu}$ (nJy)")
     ax.set_title(title)
     if custom_ax is None: plt.show()
+    if custom_ax is None: return fig
 
 def plot_group_filter(filter_list, plot_func, **kwargs):
     """

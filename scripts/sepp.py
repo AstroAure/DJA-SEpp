@@ -13,6 +13,7 @@ def main():
     bucket = sys.argv[5] if len(sys.argv)>5 else 'aurelien-sepp'
     fit_case = sys.argv[6] if len(sys.argv)>6 else 'B+D' #'sersic_rg4', 'B+D'
     thread_count = sys.argv[7] if len(sys.argv)>7 else 32
+    tile = f"tile-{sys.argv[8]}" if len(sys.argv)>8 else ""
 
     img_dir  = f"{home}/fields/{field}/image/{img_path}"
     sepp_dir = f"{home}/fields/{field}/sepp"
@@ -21,7 +22,7 @@ def main():
     # Python configuration file for SE++
     python_config = f'{config_folder}/sepp-config.py'
     # Detection image
-    detect_img = glob.glob(f'{img_dir}/*ir*sci*.fits')[0]
+    detect_img = glob.glob(f'{img_dir}/*ir*sci*{tile}*.fits')[0]
     # Filter to use on the detection image
     filt = f'{config_folder}/gauss_1.5_3x3.conv'
     # Output
@@ -32,8 +33,8 @@ def main():
 
     # Run SE++
     dja_sepp.sepp.run_sepp(detect_img=detect_img,
-                           generic_img=f"{img_dir}/*clear*sci*.fits",
-                           generic_wht=f"{img_dir}/*clear*wht*.fits",
+                           generic_img=f"{img_dir}/*clear*sci*{tile}*.fits",
+                           generic_wht=f"{img_dir}/*clear*wht*{tile}*.fits",
                            generic_psf=f"{psf_dir}/*star_psf.psf",
                            output_catname=output_catname,
                            checkimg_path=checkimg_path,
