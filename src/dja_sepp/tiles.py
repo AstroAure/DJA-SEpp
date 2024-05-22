@@ -1,17 +1,13 @@
 import os
-from typing import Union
+import fnmatch
 import glob
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from matplotlib.font_manager import FontProperties
 from astropy.io import fits
 from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales, pixel_to_skycoord
-from astropy.coordinates import SkyCoord
 from astropy.visualization import ImageNormalize, MinMaxInterval, ZScaleInterval, LogStretch
-from astropy.visualization.wcsaxes import add_scalebar
 import astropy.units as u
 from . import utils
 
@@ -104,8 +100,12 @@ def plot_tiles(nx, ny, tiles, plot_main=False, data=None, wcs=None):
     data : data array of the main image (required if plot_main==True)
     wcs : WCS of the main image (required if plot_main==True)
     """
+    h, w = tiles[0].data.shape
+    plot_x_size = min(12, 2*nx)
+    plot_y_size = min(8, plot_x_size*ny/nx*h/w)
+    plot_x_size = min(12, plot_y_size*nx/ny*w/h)
     if plot_main:
-        fig = plt.figure(layout='constrained', figsize=(12,6))
+        fig = plt.figure(layout='constrained', figsize=(plot_x_size,plot_y_size/2))
         gs = GridSpec(ny, nx*2, figure=fig)
         ax_main = fig.add_subplot(gs[:,nx:], projection=wcs)
         norm = ImageNormalize(data, interval=ZScaleInterval())
@@ -114,21 +114,25 @@ def plot_tiles(nx, ny, tiles, plot_main=False, data=None, wcs=None):
         ax_main.set_xlabel('Right Ascension (J2000)')
         ax_main.set_ylabel('Declination (J2000)')
     else:
-        fig = plt.figure(layout='constrained', figsize=(6,6))
+        fig = plt.figure(layout='constrained', figsize=(plot_x_size,plot_y_size))
         gs = GridSpec(ny, nx, figure=fig)
         norm = ImageNormalize(tiles[0].data, interval=ZScaleInterval())
     for j in range(ny):
         for i in range(nx):
-            tile = tiles[i+ny*j]
+            tile = tiles[i+nx*j]
             ax = fig.add_subplot(gs[ny-j-1,i], projection=tile.wcs)
             ax.imshow(tile.data, cmap='gray', origin='lower', norm=norm)
             ax.set_axis_off()
+            if (j==ny-1) & (i==nx-1):
+                utils.add_good_scalebar(ax, tile.wcs)
+    return fig
 
 def batch_tiling(generic_filename   : str,
                  tile_max_size      : u.Quantity,
                  overlap            : u.Quantity,
                  save_folder        : str = None, 
                  plot               : bool = False,
+                 plot_str           : str = None,
                  verbose            : bool = False) -> None :
     """
     Create tiles for all selected images, 
@@ -146,6 +150,8 @@ def batch_tiling(generic_filename   : str,
         By default, the images will be saved in a `cutout` sub-folder of the initial folder.
     * `plot` (`bool`, optional):
         Plots the tiles for the first band with MinMax and Log stretching.
+    * `plot_str` (`str`, optional):
+        Regex to choose the image to plot. Can use wildcards (*,?) readable by `glob.glob`.
     * `verbose` (`bool`, optional)
     """
     image_list = glob.glob(generic_filename)
@@ -168,6 +174,7 @@ def batch_tiling(generic_filename   : str,
         tiles = create_tiles(data, wcs, centers, sizes)
         # Save tiles
         save_tiles(tiles, img, save_folder, verbose=verbose)
-        if plot & (i==0):
-            plot_tiles(nx, ny, tiles, plot_main=False)
-    plt.show()
+        if plot & fnmatch.fnmatch(img, plot_str):
+            fig = plot_tiles(nx, ny, tiles, plot_main=False)
+    if plot: plt.show()
+    if plot: return fig
