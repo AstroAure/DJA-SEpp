@@ -49,6 +49,8 @@ def main():
                            verbose=True)
     # Save to S3
     dja_sepp.s3.save_s3(output_catname, bucket, f"{field}/sepp")
+    for file in glob.glob(f"{checkimg_path}/*"):
+        dja_sepp.s3.save_s3(file, bucket, f"{field}/sepp/checkimages")
 
 if __name__=='__main__':
     main()

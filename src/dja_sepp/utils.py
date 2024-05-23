@@ -304,6 +304,17 @@ def plot_group_filter(filter_list, plot_func, **kwargs):
         axs.flatten()[i].set_axis_off()
     return fig, axs
 
+def get_filter_list(keys):
+    """
+    Find filter list from column names of a SE++ catalog
+
+    keys : list of column names (obtained throught cat.keys())
+
+    Returns : list of filter names (in lowercase)
+    """
+    return [key.split("_")[-1].lower() for key in keys if (('MAG_MODEL' in key) and ('err' not in key) and ('BULGE' not in key) and ('DISK' not in key))]
+
+
 def main():
     fig, ax = plt.subplots(figsize=(12,5))
     plot_filters(ax, ['f090w', 'f115w', 'f200w', 'f277w', 'f356w', 'f444w'])
