@@ -107,7 +107,7 @@ def run_sepp(detect_img : str,
                    --grouping-algorithm split \
                    --partition-multithreshold yes \
                    --partition-minimum-area 18 \
-                   --grouping-hard-limit 0 \
+                   --grouping-hard-limit 50 \
                    --partition-minimum-contrast 0.0001 \
                    --partition-threshold-count 42 \
                    --use-cleaning yes \

@@ -4,3 +4,4 @@ __pycache__/
 build_package.ipynb
 fields/
 notebooks/00_Tests.ipynb
+psfex/

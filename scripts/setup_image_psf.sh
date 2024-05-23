@@ -3,7 +3,8 @@
 FIELD=$1
 BUCKET=$2
 DECOMPRESS=${3:-false}
-PSF=${4:-true}
+TILE=$4
+PSF=${5:-true}
 
 ./setup.sh
 
@@ -12,7 +13,13 @@ if $DECOMPRESS
 then
     python3 decompress.py $FIELD /FlashStorage/DJA-SEpp 1 $BUCKET
 else
-    python3 download_full.py $FIELD /FlashStorage/DJA-SEpp $BUCKET
+    # Download full or tile
+    if [ -z "$TILE" ]
+    then
+        python3 download_full.py $FIELD /FlashStorage/DJA-SEpp $BUCKET
+    else
+        python3 download_tile.py $FIELD $TILE /FlashStorage/DJA-SEpp $BUCKET
+    fi
 fi
 
 # Calculate PSF or download PSF
