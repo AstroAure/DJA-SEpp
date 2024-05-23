@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dja_sepp"
-version = "0.1.13"
+version = "0.1.14"
 authors = [
     {name="Aurélien Genin", email="aurelien.genin@polytechnique.org"}
 ]
@@ -22,6 +22,8 @@ dependencies = [
     "numpy",
     "matplotlib",
     "astropy",
+    "shapely",
+    "reproject",
     "scikit-learn"
 ]
 

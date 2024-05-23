@@ -1,6 +1,9 @@
 import os
+import re
 import fnmatch
 import glob
+import numpy as np
+import numpy.ma as ma
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from astropy.io import fits
@@ -8,7 +11,11 @@ from astropy.nddata import Cutout2D
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales, pixel_to_skycoord
 from astropy.visualization import ImageNormalize, MinMaxInterval, ZScaleInterval, LogStretch
+from astropy.coordinates import SkyCoord
+from astropy.table import vstack
 import astropy.units as u
+from reproject import reproject_interp, reproject_exact
+from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
 from . import utils
 
 def create_tiles(data, wcs, centers, sizes):
@@ -178,3 +185,97 @@ def batch_tiling(generic_filename   : str,
             fig = plot_tiles(nx, ny, tiles, plot_main=False)
     if plot: plt.show()
     if plot: return fig
+
+def merge_catalogs(cat1, cat2, max_sep=0.25*u.arcsec, filter_merge='f200w', return_matches=False):
+    """
+    Merge two tile catalog by finding matches and selecting between these matches by lowest mag error
+
+    cat1/cat2 : catalogs (astropy.table.Table) to merge
+    max_sep : maximum separation between sources for cross match
+    filter_merge : filter to use for the selection using lowest mag error
+    return_matches : whether to return the indices of the sources in cat1/cat2 matched
+
+    Returns : merged catalog (astropy.table.Table)
+    """
+    # Creating columns that are in one catalog but not the other, and in list-columns (missing filters)
+    keys1 = cat1.keys()
+    filter_list1 = utils.get_filter_list(keys1)
+    keys2 = cat2.keys()
+    filter_list2 = utils.get_filter_list(keys2)
+    filter_list = list(set(filter_list1 + filter_list2))
+    filter_list.sort()
+    list_cols = []
+    for key in cat1.keys():
+        if len(cat1[key].shape)>1:
+            if cat1[key].shape[1]==len(filter_list1):
+                list_cols.append(key)
+    for i, filter in enumerate(filter_list):
+        if filter not in filter_list1:
+            for col in list_cols:
+                cat1[col] = np.insert(ma.array(cat1[col]), i, ma.masked, axis=1)
+        if filter not in filter_list2:
+            for col in list_cols:
+                cat2[col] = np.insert(ma.array(cat2[col]), i, ma.masked, axis=1)
+    # Matching sources
+    coord1 = SkyCoord(cat1['world_centroid_alpha']*u.degree, cat1['world_centroid_delta']*u.degree)
+    coord2 = SkyCoord(cat2['world_centroid_alpha']*u.degree, cat2['world_centroid_delta']*u.degree)
+    idx, d2d, _ = coord1.match_to_catalog_sky(coord2)
+    match1 = np.where(d2d<max_sep)[0]
+    match2 = idx[match1]
+    # Selecting matched sources based on mag uncertainty
+    merge_choice = cat1[match1][f'MAG_MODEL_{filter_merge.upper()}_err']<cat2[match2][f'MAG_MODEL_{filter_merge.upper()}_err']
+    merged_1 = cat1[match1][merge_choice]
+    merged_2 = cat2[match2][~merge_choice]
+    # Selecting unmatched sources
+    cat1_unmatched = cat1[[i for i in range(len(cat1)) if i not in match1]]
+    cat2_unmatched = cat2[[i for i in range(len(cat2)) if i not in match2]]
+    # Merging catalogs
+    merged = vstack([cat1_unmatched, cat2_unmatched, merged_1, merged_2], join_type='outer')
+    if return_matches: return merged, match1, match2
+    return merged
+    # return cat1
+
+def merge_tiles(catalogs, max_sep=0.25*u.arcsec, filter_merge='f200w'):
+    """
+    Merge tile catalogs by finding matches and selecting between these matches by lowest mag error
+
+    catalogs : catalogs (astropy.table.Table) to merge
+    max_sep : maximum separation between sources for cross match
+    filter_merge : filter to use for the selection using lowest mag error
+
+    Returns : merged catalog (astropy.table.Table)
+    """
+    merged = catalogs[0]
+    for i in range(1, len(catalogs)):
+        merged = merge_catalogs(catalogs[i], merged, max_sep, filter_merge)
+    return merged
+
+def merge_images(folder, filter_list, type, exact=False, out_folder=None, verbose=False):
+    """
+    Mosaic tile images (data, model, residual) by reprojection and co-addition
+
+    folder : folder of the images to mosaic
+    filter_list : list of filters (in image names) to use for mosaicing process
+    type : type of images to mosaic (fromerly, prefix of image name)
+    exact : use `reproject.reproject_exact` for reprojection (by default, `reproject.reproject_interp`)
+    out_folder : folder to save the mosaiced images. By default, same folder as `folder`
+    verbose : verbose
+    """
+    if verbose: print("Finding optimal WCS")
+    images = []
+    for filter in filter_list:
+        images.extend(glob.glob(f"{folder}/*{type}*{filter}*sci*"))
+    wcs_out, shape_out = find_optimal_celestial_wcs(images, auto_rotate=True)
+    for filter in filter_list:
+        if verbose: print(f"---- {filter.upper()} ----")
+        images = glob.glob(f"{folder}/*{type}*{filter}*")
+        if verbose: print("Mosaicing")
+        reproject_function = reproject_exact if exact else reproject_interp
+        mosaic, footprint = reproject_and_coadd(images, wcs_out, shape_out=shape_out, 
+                                                reproject_function=reproject_function,
+                                                match_background=False)
+        if verbose: print("Saving")
+        full = fits.PrimaryHDU(mosaic, wcs_out.to_header())
+        out_folder = folder if out_folder is None else out_folder
+        name = re.sub('tile-\d+', 'tile-full', images[0].split('/')[-1])
+        full.writeto(f"{out_folder}/{name}", overwrite=True)
