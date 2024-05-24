@@ -250,32 +250,37 @@ def merge_tiles(catalogs, max_sep=0.25*u.arcsec, filter_merge='f200w'):
         merged = merge_catalogs(catalogs[i], merged, max_sep, filter_merge)
     return merged
 
-def merge_images(folder, filter_list, type, exact=False, out_folder=None, verbose=False):
+def merge_images(folder, filter_list, type, wcs=None, shape=None, exact=False, out_folder=None, verbose=False):
     """
     Mosaic tile images (data, model, residual) by reprojection and co-addition
 
     folder : folder of the images to mosaic
     filter_list : list of filters (in image names) to use for mosaicing process
     type : type of images to mosaic (fromerly, prefix of image name)
+    wcs : WCS for final image
+    shape : shape for final image
     exact : use `reproject.reproject_exact` for reprojection (by default, `reproject.reproject_interp`)
     out_folder : folder to save the mosaiced images. By default, same folder as `folder`
     verbose : verbose
     """
-    if verbose: print("Finding optimal WCS")
-    images = []
-    for filter in filter_list:
-        images.extend(glob.glob(f"{folder}/*{type}*{filter}*sci*"))
-    wcs_out, shape_out = find_optimal_celestial_wcs(images, auto_rotate=True)
+    if (wcs is None) or (shape is None):
+        if verbose: print("Finding optimal WCS")
+        images = []
+        for filter in filter_list:
+            images.extend(glob.glob(f"{folder}/*{type}*{filter}*sci*[!tile-full]*"))
+        wcs, shape = find_optimal_celestial_wcs(images, auto_rotate=True)
     for filter in filter_list:
         if verbose: print(f"---- {filter.upper()} ----")
-        images = glob.glob(f"{folder}/*{type}*{filter}*")
+        images = glob.glob(f"{folder}/*{type}*{filter}*sci*tile-[!full]*")
+        if verbose: print(f"{filter.upper()} : {images}")
         if verbose: print("Mosaicing")
         reproject_function = reproject_exact if exact else reproject_interp
-        mosaic, footprint = reproject_and_coadd(images, wcs_out, shape_out=shape_out, 
+        mosaic, footprint = reproject_and_coadd(images, wcs, shape_out=shape, 
                                                 reproject_function=reproject_function,
                                                 match_background=False)
         if verbose: print("Saving")
-        full = fits.PrimaryHDU(mosaic, wcs_out.to_header())
+        full = fits.PrimaryHDU(mosaic, wcs.to_header())
         out_folder = folder if out_folder is None else out_folder
         name = re.sub('tile-\d+', 'tile-full', images[0].split('/')[-1])
         full.writeto(f"{out_folder}/{name}", overwrite=True)
+    return wcs, shape
