@@ -134,7 +134,7 @@ if fit_case == "sersic_rg4" :
     rad = FreeParameter(lambda o: o.radius, Range(lambda v, o: (.0001, 1.5*v), RangeType.EXPONENTIAL))
     
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
-    add_prior( lrd, 0.027/pxscale.value,  0.5) 
+    add_prior( lrd, 0.027/pxscale,  0.5) 
     
     sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
     X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
@@ -198,7 +198,7 @@ if fit_case == "B+D":
 #     r_d = FreeParameter(lambda o: o.radius*2.0, Range(lambda v,o: (0.01*v, 1.1*v), RangeType.EXPONENTIAL))
     
     lrd = DependentParameter( lambda y : np.log10(y), r_d )
-    add_prior( lrd, 0.33+np.log10(0.1/pxscale.value), 0.25 ) ## log10(rd) in pixels 
+    add_prior( lrd, 0.33+np.log10(0.1/pxscale), 0.25 ) ## log10(rd) in pixels 
     
     rel_size = DependentParameter( lambda x,y : np.log10(y)-(1.14*np.log10(x)-1.2), r_b, r_d )
     add_prior( rel_size, 0.0, 0.4 )
@@ -310,7 +310,7 @@ if fit_case == "sersic_full_assoc" :
     rad = FreeParameter(lambda o: 1.3*o.assoc_value_5, Range(lambda v, o: (v*0.01, 100*v), RangeType.EXPONENTIAL))
     
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
-    add_prior( lrd, 0.027/pxscale.value,  0.5) 
+    add_prior( lrd, 0.027/pxscale,  0.5) 
 
     if True:
         sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
