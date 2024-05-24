@@ -1,6 +1,9 @@
 import sys
 from glob import glob
 import numpy as np
+from astropy.io import fits
+from astropy.wcs import WCS
+import astropy.units as u
 from sourcextractor.config import *
 
 #### READ ARGUMENTS PASSED THROUGH --python-arg #########
@@ -79,6 +82,11 @@ filters_waveband = {'F090W': {'pivot': 0.901, 'band': 0.194},
                     'F460M': {'pivot': 4.624, 'band': 0.228},
                     'F480M': {'pivot': 4.834, 'band': 0.303},}
 
+with fits.open(list_of_IMG_names[0], memmap=True) as hdul:
+    header = hdul[0].header
+    wcs = WCS(header)
+    pxscale = abs(wcs.pixel_scale_matrix[0,0])*(u.deg.to(u.arcsec))
+
 list_of_IMG_names = list( map( lambda x: x, list_of_IMG_names) )
 list_of_WHT_names = list( map( lambda x: x, list_of_WHT_names) )
 list_of_PSF_names = list( map( lambda x: x, list_of_PSF_names) )
@@ -126,7 +134,7 @@ if fit_case == "sersic_rg4" :
     rad = FreeParameter(lambda o: o.radius, Range(lambda v, o: (.0001, 1.5*v), RangeType.EXPONENTIAL))
     
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
-    add_prior( lrd, 0.027/0.03,  0.5) 
+    add_prior( lrd, 0.027/pxscale.value,  0.5) 
     
     sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
     X_sersic = DependentParameter( lambda n: np.log( (n-0.25)/(10-n) ), sersic )
@@ -182,7 +190,6 @@ if fit_case == "sersic_rg4" :
 
 ### Bulge + Disc (detection mode)
 if fit_case == "B+D":
-    det_pix_scale = 0.04 # Pixel scale of detection image
     x,y = get_pos_parameters()
 
     r_b = FreeParameter(lambda o: o.radius, Range(lambda v,o: (0.001*v, 1.1*v), RangeType.EXPONENTIAL))
@@ -191,7 +198,7 @@ if fit_case == "B+D":
 #     r_d = FreeParameter(lambda o: o.radius*2.0, Range(lambda v,o: (0.01*v, 1.1*v), RangeType.EXPONENTIAL))
     
     lrd = DependentParameter( lambda y : np.log10(y), r_d )
-    add_prior( lrd, 0.33+np.log10(0.1/det_pix_scale), 0.25 ) ## log10(rd) in pixels 
+    add_prior( lrd, 0.33+np.log10(0.1/pxscale.value), 0.25 ) ## log10(rd) in pixels 
     
     rel_size = DependentParameter( lambda x,y : np.log10(y)-(1.14*np.log10(x)-1.2), r_b, r_d )
     add_prior( rel_size, 0.0, 0.4 )
@@ -303,7 +310,7 @@ if fit_case == "sersic_full_assoc" :
     rad = FreeParameter(lambda o: 1.3*o.assoc_value_5, Range(lambda v, o: (v*0.01, 100*v), RangeType.EXPONENTIAL))
     
     lrd=DependentParameter( lambda re: 1.015**(re - 10), rad )
-    add_prior( lrd, 0.027/0.03,  0.5) 
+    add_prior( lrd, 0.027/pxscale.value,  0.5) 
 
     if True:
         sersic = FreeParameter( 2.0, Range((0.3, 8.4), RangeType.LINEAR))
