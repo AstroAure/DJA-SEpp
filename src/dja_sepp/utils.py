@@ -312,7 +312,9 @@ def get_filter_list(keys):
 
     Returns : list of filter names (in lowercase)
     """
-    return [key.split("_")[-1].lower() for key in keys if (('MAG_MODEL' in key) and ('err' not in key) and ('BULGE' not in key) and ('DISK' not in key))]
+    filter_list = [key.split("_")[-1].lower() for key in keys if (('MAG_MODEL' in key) and ('err' not in key) and ('BULGE' not in key) and ('DISK' not in key))]
+    filter_list.sort()
+    return filter_list
 
 
 def main():
