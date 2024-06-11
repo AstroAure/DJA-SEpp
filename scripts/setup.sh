@@ -6,7 +6,7 @@ if [[ "$BASE" == *"FlashStorage"* ]]
 then
     mount-storage /FlashStorage/
 fi
-python3 -m pip install --upgrade dja_sepp
+pip install --upgrade dja_sepp
 mkdir $BASE
 cd $BASE
 wget https://github.com/AstroAure/DJA-SEpp/archive/main.zip

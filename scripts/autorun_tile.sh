@@ -35,9 +35,9 @@ cd DJA-SEpp/scripts
 chmod +x setup.sh
 ./setup.sh /home/ec2-user/RUN
 echo 'Downloading PSF files' >> /home/ec2-user/LOG.log
-python3 -u download_psf.py $FIELD /home/ec2-user/RUN $BUCKET
+python3 -u /home/ec2-user/DJA-SEpp/scripts/download_psf.py $FIELD /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG.log 2>> /home/ec2-user/LOG.log
 echo 'Downloading tile images' >> /home/ec2-user/LOG.log
-python3 -u download_tile.py $FIELD $TILE /home/ec2-user/RUN $BUCKET"
+python3 -u /home/ec2-user/DJA-SEpp/scripts/download_tile.py $FIELD $TILE /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG.log 2>> /home/ec2-user/LOG.log"
 
 echo "$SCRIPT"
 # eval "$SCRIPT"
