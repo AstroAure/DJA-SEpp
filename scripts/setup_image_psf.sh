@@ -2,31 +2,31 @@
 
 FIELD=$1
 BUCKET=$2
-HOME=$3
+BASE=$3
 DECOMPRESS=${4:-false}
 TILE=$5
 PSF=${6:-true}
 
-./setup.sh $HOME
+./setup.sh $BASE
 
 # Decompress or download full images
 if $DECOMPRESS
 then
-    python3 decompress.py $FIELD $HOME 1 $BUCKET
+    python3 decompress.py $FIELD $BASE 1 $BUCKET
 else
     # Download full or tile
     if [ -z "$TILE" ]
     then
-        python3 download_full.py $FIELD $HOME $BUCKET
+        python3 download_full.py $FIELD $BASE $BUCKET
     else
-        python3 download_tile.py $FIELD $TILE $HOME $BUCKET
+        python3 download_tile.py $FIELD $TILE $BASE $BUCKET
     fi
 fi
 
 # Calculate PSF or download PSF
 if $PSF
 then
-    python3 psf.py $FIELD $HOME $HOME/config $BUCKET
+    python3 psf.py $FIELD $BASE $BASE/config $BUCKET
 else
-    python3 download_psf.py $FIELD $HOME $BUCKET
+    python3 download_psf.py $FIELD $BASE $BUCKET
 fi

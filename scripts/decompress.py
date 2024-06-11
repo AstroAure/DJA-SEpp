@@ -11,7 +11,7 @@ def main():
     
     files = dja_sepp.s3.find_files(bucket='grizli-v2', 
                                    path='JwstMosaics/v7', 
-                                   regex=f".+{field}.+((f\d+(w|m)-.*clear_drc)|ir).+(sci|wht).+")
+                                   regex=f"[^/]+{field}.+((f\d+(w|m)-.*clear_drc)|ir).+(sci|wht).+")
     for i, file_name in enumerate(files):
         print(f"{i+1}/{len(files)}")
         dja_sepp.s3.decompress_save_to_S3(file_name,
