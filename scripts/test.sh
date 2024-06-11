@@ -1,10 +1,3 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-TILE=$1
-
-if [ -z "$TILE" ]
-then
-    echo 'False'
-else
-    echo $TILE
-fi
+aws s3 ls s3://aurelien-sepp

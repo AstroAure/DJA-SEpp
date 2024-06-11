@@ -12,7 +12,7 @@ def main():
 
     files = dja_sepp.s3.find_files(bucket=bucket, 
                                    path=f'{field}/image', 
-                                   regex=".+((f\d+(w|m)-.*clear_drc)|ir).+(sci|wht).+")
+                                   regex="[^/]+((f\d+(w|m)-.*clear_drc)|ir).+(sci|wht).+")
     folder = f"{home}/fields/{field}/image"
     os.makedirs(folder, exist_ok=True)
     s3 = boto3.client('s3')
