@@ -12,7 +12,7 @@ def main():
 
     files = dja_sepp.s3.find_files(bucket=bucket, 
                                    path=f'{field}/psfex', 
-                                   regex=".+(f\d+(w|m)).+psf\.psf")
+                                   regex="[^/]+(f\d+(w|m)).+psf\.psf")
     folder = f"{home}/fields/{field}/psfex"
     os.makedirs(folder, exist_ok=True)
     s3 = boto3.client('s3')

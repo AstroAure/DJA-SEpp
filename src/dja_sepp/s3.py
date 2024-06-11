@@ -18,7 +18,7 @@ def find_files(bucket:str, path:str, regex:str) -> list[str]:
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(bucket)
     for obj in bucket.objects.filter(Prefix=f"{path}/"):
-        if re.search(regex, obj.key):
+        if re.fullmatch(regex, obj.key):
             files.append(obj.key[len(path)+1:])
     return files
 
