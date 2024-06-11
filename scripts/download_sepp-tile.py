@@ -13,7 +13,7 @@ def main():
 
     files = dja_sepp.s3.find_files(bucket=bucket, 
                                    path=f'{field}/sepp', 
-                                   regex=f"[^/]+(tile-{tile})")
+                                   regex=f"[^/]+(tile-{tile}).+")
     folder = f"{home}/fields/{field}/sepp"
     os.makedirs(folder, exist_ok=True)
     s3 = boto3.client('s3')
