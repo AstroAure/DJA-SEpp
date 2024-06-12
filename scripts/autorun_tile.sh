@@ -29,7 +29,7 @@ echo 'Tile  : $TILE' >> /home/ec2-user/LOG.log
 echo 'Fit   : $FIT_CASE' >> /home/ec2-user/LOG.log
 echo '' >> /home/ec2-user/LOG.log
 echo 'Cloning git' >> /home/ec2-user/LOG.log
-git clone https://github.com/AstroAure/DJA-SEpp.git
+git clone --branch package https://github.com/AstroAure/DJA-SEpp.git
 echo 'Setting up' >> /home/ec2-user/LOG.log
 cd DJA-SEpp/scripts
 chmod +x setup.sh

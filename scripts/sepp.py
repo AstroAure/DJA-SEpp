@@ -22,7 +22,7 @@ def main():
     # Python configuration file for SE++
     python_config = f'{config_folder}/sepp-config.py'
     # Detection image
-    detect_img = glob.glob(f'{img_dir}/*ir*sci*{tile}*.fits')[0]
+    detect_img = glob.glob(f'{img_dir}/*ir*sci*{tile}.fits')[0]
     # Filter to use on the detection image
     filt = f'{config_folder}/gauss_1.5_3x3.conv'
     # Output
@@ -33,8 +33,8 @@ def main():
 
     # Run SE++
     dja_sepp.sepp.run_sepp(detect_img=detect_img,
-                           generic_img=f"{img_dir}/*clear*sci*{tile}*.fits",
-                           generic_wht=f"{img_dir}/*clear*wht*{tile}*.fits",
+                           generic_img=f"{img_dir}/*clear*sci*{tile}.fits",
+                           generic_wht=f"{img_dir}/*clear*wht*{tile}.fits",
                            generic_psf=f"{psf_dir}/*star_psf.psf",
                            output_catname=output_catname,
                            checkimg_path=checkimg_path,
