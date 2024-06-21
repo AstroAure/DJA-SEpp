@@ -27,22 +27,20 @@ TEMPLATE=${7:-'lt-0f2b50c4559cd895e'}
 #shutdown now -h"
 
 SCRIPT="#!/bin/bash
-sudo -u ec2-user -i
+# sudo -u ec2-user -i
 cd /home/ec2-user
 echo 'Field : $FIELD' > /home/ec2-user/LOG.log
 echo 'Tile  : $TILE' >> /home/ec2-user/LOG.log
 echo 'Fit   : $FIT_CASE' >> /home/ec2-user/LOG.log
 echo '' >> /home/ec2-user/LOG.log
 echo 'Cloning git' >> /home/ec2-user/LOG.log
-git clone --branch package https://github.com/AstroAure/DJA-SEpp.git
-echo 'Setting up' >> /home/ec2-user/LOG.log
-cd DJA-SEpp/scripts
-chmod +x setup.sh
-./setup.sh /home/ec2-user/RUN
-echo 'Downloading PSF files' >> /home/ec2-user/LOG.log
-python3 -u /home/ec2-user/DJA-SEpp/scripts/download_psf.py $FIELD /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG.log 2>> /home/ec2-user/LOG.log
-echo 'Downloading tile images' >> /home/ec2-user/LOG.log
-python3 -u /home/ec2-user/DJA-SEpp/scripts/download_tile.py $FIELD $TILE /home/ec2-user/RUN $BUCKET big-tiles 1>> /home/ec2-user/LOG.log 2>> /home/ec2-user/LOG.log"
+sudo -u ec2-user git clone --branch package https://github.com/AstroAure/DJA-SEpp.git
+echo 'Running SE++' >> /home/ec2-user/LOG.log
+cd /home/ec2-user/DJA-SEpp/scripts
+sudo -u ec2-user pip install dja-sepp
+sudo -u ec2-user python3 download_psf.py $FIELD /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG2.log 2>> /home/ec2-user/LOG2.log
+# sudo -u ec2-user ./run_tile.sh $FIELD $BUCKET /home/ec2-user/RUN $TILE $FIT_CASE $THREAD_COUNT false false $BUCKET_FOLDER
+# sudo -u ec2-user screen -S SEpp -dm bash -c 'pip install dja-sepp; bash' "
 
 echo "$SCRIPT"
 

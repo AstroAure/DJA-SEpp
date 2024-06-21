@@ -1,5 +1,6 @@
 import importlib.resources
 import os
+import re
 import fnmatch
 import glob
 from typing import Union
@@ -315,6 +316,17 @@ def get_filter_list(keys):
     filter_list = [key.split("_")[-1].lower() for key in keys if (('MAG_MODEL' in key) and ('err' not in key) and ('BULGE' not in key) and ('DISK' not in key))]
     filter_list.sort()
     return filter_list
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
 
 
 def main():
