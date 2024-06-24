@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # WIP
 
 FIELD=$1
@@ -37,9 +37,10 @@ echo 'Cloning git' >> /home/ec2-user/LOG.log
 sudo -u ec2-user git clone --branch package https://github.com/AstroAure/DJA-SEpp.git
 echo 'Running SE++' >> /home/ec2-user/LOG.log
 cd /home/ec2-user/DJA-SEpp/scripts
-sudo -u ec2-user pip install dja-sepp
-sudo -u ec2-user python3 download_psf.py $FIELD /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG2.log 2>> /home/ec2-user/LOG2.log
-# sudo -u ec2-user ./run_tile.sh $FIELD $BUCKET /home/ec2-user/RUN $TILE $FIT_CASE $THREAD_COUNT false false $BUCKET_FOLDER
+# sudo -u ec2-user /home/ec2-user/miniconda3/envs/dawn-310/bin/python3 -m pip install dja-sepp 1>> /home/ec2-user/LOG2.log 2>> /home/ec2-user/LOG2.log
+# sudo -u ec2-user /home/ec2-user/miniconda3/envs/dawn-310/bin/python3 download_psf.py $FIELD /home/ec2-user/RUN $BUCKET 1>> /home/ec2-user/LOG2.log 2>> /home/ec2-user/LOG2.log
+sudo -u ec2-user env "PATH=/home/ec2-user/miniconda3/envs/dawn-310/bin" ./setup_image_psf.sh $FIELD $BUCKET /home/ec2-user/RUN false $TILE false $BUCKET_FOLDER  1>> /home/ec2-user/LOG2.log 2>> /home/ec2-user/LOG2.log
+# sudo -u ec2-user env "PATH=/home/ec2-user/miniconda3/envs/dawn-310/bin" ./run_tile.sh $FIELD $BUCKET /home/ec2-user/RUN $TILE $FIT_CASE $THREAD_COUNT false false $BUCKET_FOLDER
 # sudo -u ec2-user screen -S SEpp -dm bash -c 'pip install dja-sepp; bash' "
 
 echo "$SCRIPT"

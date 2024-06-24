@@ -114,7 +114,7 @@ def run_sepp(detect_img : str,
                    --cleaning-minimum-area 15 \
                    --model-fitting-iterations 550 \
                    --sampling-scale-factor 1 \
-                   --sampling-max-fit-size 1000 \
+                   --sampling-max-fit-size 500 \
                    --check-image-model-fitting {checkimg_path}/model.fits \
                    --check-image-residual {checkimg_path}/resid.fits \
                    --log-file {output_catname.replace('.fits', '.log')} \

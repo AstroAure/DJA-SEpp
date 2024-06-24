@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 FIELD=$1
 BUCKET=$2
