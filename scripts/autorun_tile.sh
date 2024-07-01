@@ -6,7 +6,8 @@ TILE=$3
 FIT_CASE=${4:-'sersic_rg4'}
 THREAD_COUNT=${5:-32}
 BUCKET_FOLDER=${6:-'tiles'}
-TEMPLATE=${7:-'lt-0f2b50c4559cd895e'}
+INSTANCE_TYPE=${7:-'c6a.4xlarge'}
+TEMPLATE=${8:-'lt-0f2b50c4559cd895e'}
 
 EC2_PATH='/home/ec2-user/miniconda3/envs/dawn-310/bin:/home/ec2-user/miniconda3/condabin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/ec2-user:/home/ec2-user/.local/bin:/home/ec2-user/bin'
 
@@ -29,4 +30,5 @@ echo "$SCRIPT"
 # Launch instance and run code
 aws ec2 run-instances  --launch-template LaunchTemplateId=$TEMPLATE \
                        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=SEpp-auto-tile-$TILE}]" \
-                       --user-data "$SCRIPT"
+                       --user-data "$SCRIPT" \
+                       --instance-type $INSTANCE_TYPE

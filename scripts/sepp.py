@@ -48,9 +48,9 @@ def main():
                            tile_size=2000,
                            verbose=True)
     # Save to S3
-    dja_sepp.s3.save_s3(output_catname, bucket, f"{field}/sepp")
+    dja_sepp.s3.save_s3(output_catname, bucket, f"{field}/sepp/{fit_case}")
     for file in glob.glob(f"{checkimg_path}/*"):
-        dja_sepp.s3.save_s3(file, bucket, f"{field}/sepp/checkimages")
+        dja_sepp.s3.save_s3(file, bucket, f"{field}/sepp/{fit_case}/checkimages")
 
 if __name__=='__main__':
     main()
