@@ -1,0 +1,17 @@
+#!/bin/bash
+
+FIELD=$1
+BUCKET=$2
+TILE_END=$3
+TILE_START=${4:-0}
+FIT_CASE=${5:-'sersic_rg4'}
+THREAD_COUNT=${6:-32}
+BUCKET_FOLDER=${7:-'tiles'}
+INSTANCE_TYPE=${8:-'c6a.4xlarge'}
+CORE_COUNT=${9:-8}
+TEMPLATE=${10:-'lt-0f2b50c4559cd895e'}
+
+for TILE in $(seq $TILE_START $TILE_END)
+do
+    ./autorun_tile.sh $FIELD $BUCKET $TILE $FIT_CASE $THREAD_COUNT $BUCKET_FOLDER $INSTANCE_TYPE $CORE_COUNT $TEMPLATE
+done

@@ -250,13 +250,14 @@ def merge_tiles(catalogs, max_sep=0.25*u.arcsec, filter_merge='f200w'):
         merged = merge_catalogs(catalogs[i], merged, max_sep, filter_merge)
     return merged
 
-def merge_images(folder, filter_list, type, wcs=None, shape=None, exact=False, out_folder=None, verbose=False):
+def merge_images(folder, filter_list, type, suffix="*sci*tile-[!full]*", wcs=None, shape=None, exact=False, out_folder=None, verbose=False):
     """
     Mosaic tile images (data, model, residual) by reprojection and co-addition
 
     folder : folder of the images to mosaic
     filter_list : list of filters (in image names) to use for mosaicing process
     type : type of images to mosaic (fromerly, prefix of image name)
+    suffix : suffix of image_name (after filter)
     wcs : WCS for final image
     shape : shape for final image
     exact : use `reproject.reproject_exact` for reprojection (by default, `reproject.reproject_interp`)
@@ -267,11 +268,11 @@ def merge_images(folder, filter_list, type, wcs=None, shape=None, exact=False, o
         if verbose: print("Finding optimal WCS")
         images = []
         for filter in filter_list:
-            images.extend(glob.glob(f"{folder}/*{type}*{filter}*sci*[!tile-full]*"))
+            images.extend(glob.glob(f"{folder}/*{type}*{filter}*{suffix}*"))
         wcs, shape = find_optimal_celestial_wcs(images, auto_rotate=True)
     for filter in filter_list:
         if verbose: print(f"---- {filter.upper()} ----")
-        images = glob.glob(f"{folder}/*{type}*{filter}*sci*tile-[!full]*")
+        images = glob.glob(f"{folder}/*{type}*{filter}*{suffix}*")
         if verbose: print(f"{filter.upper()} : {images}")
         if verbose: print("Mosaicing")
         reproject_function = reproject_exact if exact else reproject_interp
