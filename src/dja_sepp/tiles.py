@@ -281,6 +281,7 @@ def merge_images(folder, filter_list, type, suffix="*sci*tile-[!full]*", wcs=Non
                                                 match_background=False)
         if verbose: print("Saving")
         full = fits.PrimaryHDU(mosaic, wcs.to_header())
+        full.data = full.data.astype('float32')
         out_folder = folder if out_folder is None else out_folder
         name = re.sub('tile-\d+', 'tile-full', images[0].split('/')[-1])
         full.writeto(f"{out_folder}/{name}", overwrite=True)
