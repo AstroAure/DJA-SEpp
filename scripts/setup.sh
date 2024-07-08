@@ -4,7 +4,7 @@ BASE=$1
 
 if [[ "$BASE" == *"FlashStorage"* ]]
 then
-    mount-storage /FlashStorage/
+    mount-storage /FlashStorage
 fi
 python3 -m pip install --upgrade dja_sepp
 mkdir $BASE

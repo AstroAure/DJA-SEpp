@@ -20,7 +20,7 @@ cd /home/ec2-user/DJA-SEpp/scripts
 sudo -u ec2-user screen -S SEpp -dm bash -c 'sudo -u ec2-user env "PATH=$EC2_PATH" $SCREEN_SCRIPT; sudo shutdown now -h'
 "
 
-# echo "$SCRIPT"
+echo "$SCRIPT"
 
 # Launch instance and run code
 aws ec2 run-instances  --launch-template LaunchTemplateId=$TEMPLATE \
