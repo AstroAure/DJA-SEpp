@@ -6,7 +6,7 @@ BASE=$3
 DECOMPRESS=${4:-false}
 TILE=$5
 PSF=${6:-true}
-BUCKT_FOLDER=${7:-'tiles'}
+BUCKET_FOLDER=${7:-'tiles'}
 
 ./setup.sh $BASE
 
@@ -20,7 +20,7 @@ else
     then
         python3 download_full.py $FIELD $BASE $BUCKET
     else
-        python3 download_tile.py $FIELD $TILE $BASE $BUCKET $BUCKT_FOLDER
+        python3 download_tile.py $FIELD $TILE $BASE $BUCKET $BUCKET_FOLDER
     fi
 fi
 
