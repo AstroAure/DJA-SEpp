@@ -16,7 +16,6 @@ def main():
     bucket = sys.argv[7] if len(sys.argv)>7 else ""
 
     if img_subpath=="none": img_subpath = ""
-    print(f"{home}/fields/{field}/image/{img_subpath}/*.fits")
 
     fig = dja_sepp.tiles.batch_tiling(generic_filename=f"{home}/fields/{field}/image/{img_subpath}/*.fits",
                                       tile_max_size=tile_size_arcmin*u.arcmin, overlap=overlap_arcmin*u.arcmin,
