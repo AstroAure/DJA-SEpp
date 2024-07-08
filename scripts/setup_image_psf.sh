@@ -16,7 +16,7 @@ then
     python3 decompress.py $FIELD $BASE 1 $BUCKET
 else
     # Download full or tile
-    if [$TILE == -1]
+    if [ $TILE == -1 ]
     then
         python3 download_full.py $FIELD $BASE $BUCKET
     else
