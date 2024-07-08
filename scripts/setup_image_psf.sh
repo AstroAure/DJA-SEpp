@@ -4,7 +4,7 @@ FIELD=$1
 BUCKET=$2
 BASE=$3
 DECOMPRESS=${4:-false}
-TILE=$5
+TILE=${5:--1}
 PSF=${6:-true}
 BUCKET_FOLDER=${7:-'tiles'}
 
@@ -16,7 +16,7 @@ then
     python3 decompress.py $FIELD $BASE 1 $BUCKET
 else
     # Download full or tile
-    if [ -z "$TILE" ]
+    if ($TILE==-1)
     then
         python3 download_full.py $FIELD $BASE $BUCKET
     else
