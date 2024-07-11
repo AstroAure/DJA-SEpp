@@ -18,8 +18,8 @@ SCRIPT="#!/bin/bash
 cd /home/ec2-user
 sudo -u ec2-user git clone --branch package https://github.com/AstroAure/DJA-SEpp.git
 cd /home/ec2-user/DJA-SEpp/scripts
-sudo -u ec2-user screen -S SEpp -dm bash -c '$SCREEN_SCRIPT'" #; sudo shutdown now -h'
-# "
+sudo -u ec2-user screen -S SEpp -dm bash -c '$SCREEN_SCRIPT; sudo shutdown now -h'
+"
 
 echo "$SCRIPT"
 

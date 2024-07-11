@@ -25,7 +25,9 @@ def main():
     if bucket!="":
         files = glob.glob(f"{home}/fields/{field}/image/{img_subpath}/tiles/*")
         for file in files:
-            dja_sepp.s3.save_s3(file, 'aurelien-sepp', f"{field}/image/{img_subpath}/tiles")
+            print(file.split("/")[-1])
+            path = f"{field}/image/tiles" if img_subpath=="" else f"{field}/image/{img_subpath}/tiles"
+            dja_sepp.s3.save_s3(file, 'aurelien-sepp', path)
 
 if __name__=='__main__':
     main()
