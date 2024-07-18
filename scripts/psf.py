@@ -1,6 +1,7 @@
 import sys
 import glob
 import re
+from astropy.io import fits
 import dja_sepp
 
 # python3 psf.py ceers-full-grizli-v7.2 /FlashStorage/DJA-SEpp /FlashStorage/DJA-SEpp/config aurelien-sepp
@@ -28,6 +29,7 @@ def main():
     filter_list = [re.search('(f\d+\w+)', filename).group(1) for filename in glob.glob(f"{home}/fields/{field}/image/*clear*sci*")]
     filter_list.sort()
     # Run SExtractor, cross-match and PSFEx for each band
+    psf_list = []
     for filter in filter_list:
         print(filter.upper())
         print("Running SExtractor")
@@ -49,9 +51,20 @@ def main():
                                        fwhm_range  = '1.0, 10.0',
                                        save_psf_png = True,
                                        verbose = True)
+        psf_list.append(psf)
         print("Save PSF to S3")
         dja_sepp.s3.save_s3(psf, 'aurelien-sepp', f"{field}/psfex")
         dja_sepp.s3.save_s3(psf.replace('.psf','.png'), 'aurelien-sepp', f"{field}/psfex")
+
+    # Plot PSF summary
+    def psf_plot(ax, filter):
+        with fits.open(psf_list[filter_list.index(filter)]) as image:
+            psf = image[1].data[0][0][0]
+        dja_sepp.psfex.psf_plot(ax, filter, psf)
+    fig, ax = dja_sepp.utils.plot_group_filter(filter_list, psf_plot)
+    fig.tight_layout()
+    fig.savefig(f"{home}/fields/{field}/psfex/PSF_summary_{field}.png", bbox_inches='tight', pad_inches=0, dpi=100)
+    dja_sepp.s3.save_s3(f"{home}/fields/{field}/psfex/PSF_summary_{field}.png", 'aurelien-sepp', f"{field}/psfex")
         
 
 if __name__=='__main__':
