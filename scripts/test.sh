@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-FIELD='ceers-full-grizli-v7.2'
-BASE='/home/aurelien/DAWN/DJA-SEpp'
-BUCKET='aurelien-sepp'
+A=$1
+B=$2
+C=$3
 
-# aws s3 sync s3://aurelien-sepp/$FIELD/psfex $BASE/fields/$FIELD/psfex --exclude="*" --include="*.psf" --dryrun
-python3 download_psf.py $FIELD $BASE $BUCKET
+echo $A
+echo $B
+echo $C

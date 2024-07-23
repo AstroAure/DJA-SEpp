@@ -13,7 +13,6 @@ TEMPLATE=${9:-'lt-0f2b50c4559cd895e'}
 EC2_PATH='/home/ec2-user/miniconda3/envs/dawn-310/bin:/home/ec2-user/miniconda3/condabin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/ec2-user:/home/ec2-user/.local/bin:/home/ec2-user/bin'
 
 SCRIPT="#!/bin/bash
-# sudo -u ec2-user -i
 cd /home/ec2-user
 echo 'Field : $FIELD' > /home/ec2-user/LOG.log
 echo 'Tile  : $TILE' >> /home/ec2-user/LOG.log

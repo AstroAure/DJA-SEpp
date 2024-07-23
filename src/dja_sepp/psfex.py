@@ -3,7 +3,9 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import SymLogNorm
+from matplotlib import patheffects
 from astropy.io import fits
+from . import utils
 
 # To work, this file requires you to have PSFEx installed on your machine.
 
@@ -48,11 +50,30 @@ def run_psfex(cat_name,
         psf = image[1].data[0][0][0]
         image.close()
         fig, ax = plt.subplots(figsize=(6,6))
-        ax.set_axis_off()
-        ax.imshow(psf, origin='lower', cmap='bone_r', norm=SymLogNorm(linthresh=1e-5, linscale=0.8))
+        psf_plot(ax, filter=None, psf_data=psf)
         fig.savefig(f"{filename.replace('.psf','.png')}", bbox_inches='tight', pad_inches=0, dpi=60)
         if verbose: plt.show()
     return filename
+
+def psf_plot(ax, filter, psf_data):
+    """
+    Plots the PSF with log scaling.
+
+    ax : plt.Axes to plot the PSF
+    filter : filter name to display a text on the image (can be None)
+    psf_data : array of the PSF image (from fits.open for example)
+    """
+    ax.set_axis_off()
+    ax.imshow(psf_data, origin='lower', cmap='bone_r', norm=SymLogNorm(linthresh=1e-5, linscale=0.8))
+    if filter is not None:
+        ax.text(0.06, 0.9, filter.upper(), transform=ax.transAxes, 
+                fontsize='x-large', fontweight='bold', 
+                color=utils.color_dict[filter.upper()],
+                path_effects=[patheffects.withStroke(linewidth=1, foreground="k")])
+        ax.text(0.82, 0.89, utils.channel_dict[filter.upper()], transform=ax.transAxes, 
+                fontsize='xx-large', fontweight='bold', 
+                color=utils.channel_color_dict[utils.channel_dict[filter.upper()]],
+                path_effects=[patheffects.withStroke(linewidth=1, foreground="k")])
     
 def compare_star(cat_name, cat_name_star, 
                  output_cat, output_cat_star, 

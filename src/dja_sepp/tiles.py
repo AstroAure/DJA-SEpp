@@ -285,4 +285,7 @@ def merge_images(folder, filter_list, type, suffix="*sci*tile-[!full]*", wcs=Non
         out_folder = folder if out_folder is None else out_folder
         name = re.sub('tile-\d+', 'tile-full', images[0].split('/')[-1])
         full.writeto(f"{out_folder}/{name}", overwrite=True)
+        del full
+        del mosaic
+        del footprint
     return wcs, shape

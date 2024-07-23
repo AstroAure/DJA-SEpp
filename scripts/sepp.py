@@ -33,9 +33,9 @@ def main():
 
     # Run SE++
     dja_sepp.sepp.run_sepp(detect_img=detect_img,
-                           generic_img=f"{img_dir}/*clear*sci*{tile}.fits",
-                           generic_wht=f"{img_dir}/*clear*wht*{tile}.fits",
-                           generic_psf=f"{psf_dir}/*star_psf.psf",
+                           generic_img=f"{img_dir}/*w-clear*sci*{tile}.fits",
+                           generic_wht=f"{img_dir}/*w-clear*wht*{tile}.fits",
+                           generic_psf=f"{psf_dir}/*w-clear*star_psf.psf",
                            output_catname=output_catname,
                            checkimg_path=checkimg_path,
                            python_config=python_config,
