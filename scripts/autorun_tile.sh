@@ -29,7 +29,7 @@ sudo -u ec2-user screen -S SEpp -dm bash -c 'sudo -u ec2-user env "PATH=$EC2_PAT
 
 # Launch instance and run code
 aws ec2 run-instances  --launch-template LaunchTemplateId=$TEMPLATE \
-                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=SEpp-auto-tile-$TILE}]" \
+                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=SEpp-$FIT_CASE-$TILE}]" \
                        --cpu-options "CoreCount=$CORE_COUNT" \
                        --user-data "$SCRIPT" \
                        --instance-type $INSTANCE_TYPE
