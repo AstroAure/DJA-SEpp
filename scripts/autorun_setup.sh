@@ -4,7 +4,7 @@ FIELD=$1
 BUCKET=$2
 DECOMPRESS=${3:-true}
 PSF=${4:-true}
-TILE_SIZE=${5:-5}
+TILE_SIZE=${5:-2}
 TILE_OVERLAP=${6:-0.5}
 INSTANCE_TYPE=${7:-'c6id.4xlarge'}
 TEMPLATE=${8:-'lt-0f2b50c4559cd895e'}
@@ -25,7 +25,7 @@ echo "$SCRIPT"
 
 # Launch instance and run code
 aws ec2 run-instances  --launch-template LaunchTemplateId=$TEMPLATE \
-                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=SEpp-setup}]" \
+                       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=SEpp-setup-$FIELD}]" \
                        --cpu-options "CoreCount=8" \
                        --user-data "$SCRIPT" \
                        --instance-type $INSTANCE_TYPE

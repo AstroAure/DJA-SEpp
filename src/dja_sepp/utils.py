@@ -20,6 +20,7 @@ import astropy.units as u
 # Color dictionaries to make the plot nicer with colored filter names
 color_dict = {'F090W':'#0000E3', 
               'F115W':'#1020FF',
+              'F140M':'#003CFF',
               'F150W':'#0162FF',
               'F182M':'#00B1FF',
               'F200W':'#04D1FF',
@@ -34,7 +35,7 @@ color_dict = {'F090W':'#0000E3',
               'F444W':'#FF330C',
               'F460M':'#DF0606',
               'F480M':'#B20000',}
-channel_dict = {'F090W':'SW', 'F115W':'SW', 'F150W':'SW', 'F182M':'SW', 'F200W':'SW', 'F210M':'SW',
+channel_dict = {'F090W':'SW', 'F115W':'SW', 'F140M':'SW', 'F150W':'SW', 'F182M':'SW', 'F200W':'SW', 'F210M':'SW',
                 'F250M':'LW', 'F277W':'LW', 'F300M':'LW', 'F335M':'LW', 'F356W':'LW', 'F410M':'LW', 'F430M':'LW', 'F444W':'LW', 'F460M':'LW', 'F480M':'LW'}
 channel_color_dict = {'SW' : '#0162FF', 'LW' : '#FF330C'}
 
