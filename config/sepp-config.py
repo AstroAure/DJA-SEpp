@@ -289,6 +289,106 @@ if fit_case == "B+D":
         add_output_column(f'X_B/T_{band}', X_bt[i])
         i += 1
 
+if fit_case == "B+D_corr": # Corrected Bulge+Disk
+    x,y = get_pos_parameters()
+
+    r_b = FreeParameter(lambda o: o.radius, Range(lambda v,o: (0.001*v, 1.1*v), RangeType.EXPONENTIAL))
+    r_d = FreeParameter(lambda o: o.radius, Range(lambda v,o: (0.01*v, 3*v), RangeType.EXPONENTIAL))
+#     r_b = FreeParameter(lambda o: o.radius*0.5, Range(lambda v,o: (0.01*v, 2.1*v), RangeType.EXPONENTIAL))
+#     r_d = FreeParameter(lambda o: o.radius*2.0, Range(lambda v,o: (0.01*v, 1.1*v), RangeType.EXPONENTIAL))
+    
+    lrd = DependentParameter( lambda y : np.log10(y), r_d )
+    add_prior( lrd, 0.33+np.log10(0.1/pxscale), 0.25 ) ## log10(rd) in pixels 
+    
+    rel_size = DependentParameter( lambda x,y : np.log10(y)-(1.14*np.log10(x)-1.2), r_d, r_b )
+    add_prior( rel_size, 0.0, 0.4 )
+    
+    angle = FreeParameter( lambda o: o.angle )
+    
+    ratio_d = FreeParameter( 0.5, Range( (0.1, 1.0), RangeType.LINEAR) )
+    X_rd = DependentParameter( lambda q: np.log( (q-0.01)/(1.01-q) ), ratio_d )
+    add_prior( X_rd, 0.03, 1.0 )
+    
+    ratio_b = FreeParameter( 0.6, Range( (0.3, 1.0), RangeType.LINEAR) )
+    X_rb = DependentParameter( lambda q: np.log( (q-0.01)/(1.01-q) ), ratio_b )
+    add_prior( X_rb, 0.50, 1.1 )
+    
+    ra, dec, wc_rad_b, wc_angle, wc_ratio_b = get_world_parameters(x, y, r_b, angle, ratio_b)
+    ra, dec, wc_rad_d, wc_angle, wc_ratio_d = get_world_parameters(x, y, r_d, angle, ratio_d)
+    
+    
+    add_output_column('X_MODEL', x)
+    add_output_column('Y_MODEL', y)
+    add_output_column('RA_MODEL', ra)
+    add_output_column('DEC_MODEL', dec)
+    add_output_column('DISK_RADIUS_pix', r_d)
+    add_output_column('BULGE_RADIUS_pix', r_b)
+    add_output_column('DISK_RADIUS_deg', wc_rad_d)
+    add_output_column('BULGE_RADIUS_deg', wc_rad_b)
+    add_output_column('ANGLE_DetImg', angle)
+    add_output_column('ANGLE', wc_angle)
+    add_output_column('DISK_AXRATIO', wc_ratio_d)
+    add_output_column('BULGE_AXRATIO', wc_ratio_b)
+    add_output_column('DISK_AXRATIO_DetImg', ratio_d)
+    add_output_column('BULGE_AXRATIO_DetImg', ratio_b)
+
+
+        
+    def func_X_BT_med(lambda_um):
+        a = 0.59009933
+        b = 0.35564443
+        c = -1.99186112
+        return a * np.log(b * lambda_um) + c
+
+    def func_X_BT_wid(lambda_um):
+        a = 0.85095641
+        b = 0.68764073
+        c = 2.87822699
+        return a * np.log(b * lambda_um) + c
+    
+    i = 0
+    flux1 = {}
+    flux2 = {}
+    mag1 = {}
+    mag2 = {}
+    flux = {}
+    bt = {}
+    X_bt= {}
+    mag = {}
+
+    for band,group in mesgroup:
+        
+        flux[i] = get_flux_parameter()
+        mag[i] = DependentParameter(lambda f, zp=mag_zeropoint[band]: -2.5 * np.log10(f) + zp, flux[i] )
+        
+        bt[i] = FreeParameter(0.1, Range((0.00005,1.0), RangeType.LINEAR))
+        
+        flux1[i] = DependentParameter(lambda f, r: f*r, flux[i], bt[i] )
+        flux2[i] = DependentParameter(lambda f, r: f*(1.0-r), flux[i], bt[i] )
+        
+        mag1[i] = DependentParameter(lambda f, zp=mag_zeropoint[band]: -2.5 * np.log10(f) + zp, flux1[i] )
+        mag2[i] = DependentParameter(lambda f, zp=mag_zeropoint[band]: -2.5 * np.log10(f) + zp, flux2[i] )
+        
+        X_bt[i] = DependentParameter(lambda r: np.log( (r+0.01)/(1.01-r) ), bt[i] )
+        add_prior( X_bt[i], func_X_BT_med(filters_waveband[band]['pivot']), func_X_BT_wid(filters_waveband[band]['pivot']) )
+        
+        add_model( group, ExponentialModel( x, y, flux2[i], r_d, ratio_d, angle) )
+        add_model( group, DeVaucouleursModel( x, y, flux1[i], r_b, ratio_b, angle) )
+        
+        
+        add_output_column(f'FLUX_MODEL_{band}',  flux[i])
+        add_output_column(f'MAG_MODEL_{band}',  mag[i])
+        
+        add_output_column(f'FLUX_MODEL_BULGE_{band}',  flux1[i])
+        add_output_column(f'MAG_MODEL_BULGE_{band}',  mag1[i])
+        
+        add_output_column(f'FLUX_MODEL_DISK_{band}',  flux2[i])
+        add_output_column(f'MAG_MODEL_DISK_{band}',  mag2[i])
+        
+        add_output_column(f'B/T_{band}', bt[i])
+        add_output_column(f'X_B/T_{band}', X_bt[i])
+        i += 1
+
 ### Bulge + Disk (Sérsic) (detection mode)
 if fit_case == "B+D_free":
     x,y = get_pos_parameters()
