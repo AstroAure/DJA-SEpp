@@ -299,7 +299,7 @@ if fit_case == "B+D_free":
     lrd=DependentParameter( lambda re: 1.015**(re - 10), r_d )
     add_prior( lrd, 0.027/0.03,  0.75)
 
-    rel_size = DependentParameter( lambda x,y : np.log10(y)-(1.14*np.log10(x)-1.2), r_b, r_d )
+    rel_size = DependentParameter( lambda x,y : np.log10(y)-(1.14*np.log10(x)-1.2), r_d, r_b)
     add_prior( rel_size, 0.0, 0.4 )
 
     angle = FreeParameter( lambda o: o.angle )
