@@ -1,8 +1,9 @@
-dist/
-src/dja_sepp.egg-info/
-__pycache__/
+dist/*
+src/dja_sepp.egg-info/*
+src/dja_sepp/__pycache__/*
+__pycache__/*
 build_package.ipynb
-fields/
 notebooks/00_Tests.ipynb
-psfex/
+psfex/*
 scripts/test*
+fields/*
