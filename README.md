@@ -28,6 +28,8 @@ This part allows to run SourceXtractor++ on a complete field from the DJA, with 
     2. Merge tiles (catalog and images, one time for each model) : [`07_MergeTiles.ipynb`](notebooks/07_MergeTiles.ipynb). This step can be executed on an AWS EC2 instance (m5d.4xlarge) for faster files download and more available RAM.
     3. Merge DJA and SE++ catalogs : [`06.2_DJA-SE++CatMerge.ipynb`](notebooks/06.2_DJA-SE++CatMerge.ipynb)
     4. Analysis and science plots : [`06.3_DJA-SE++Analysis.ipynb`](notebooks/06.3_DJA-SE++Analysis.ipynb)
+ 
+* Locally: The scripts can be run locally for a few images or tiles. Take a look at the AWS scripts above for that as they're just starting an AWS instance and then running scripts from this repository on them. The scripts should be fairly easy to understand and adapt to your uses if required.
 
 #### Jupyter notebooks (old way)
 0. *(optional)* Cutouts in the image : [`00.2_Cutout.ipynb`](notebooks/00.2_Cutout.ipynb)
