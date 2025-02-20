@@ -108,7 +108,7 @@ def plot_MuvMAG(data, star_selections=[], mag_bounds=(17,30), mu_bounds=(13,25),
     ax.set_ylabel('MU_MAX')
     ax.set_xlim(mag_bounds[0],mag_bounds[1])
     ax.set_ylim(mu_bounds[0],mu_bounds[1])
-    ax.legend(loc='best')
+    ax.legend(loc='lower right')
     if ax_custom is None: plt.show()
 
 def hist_CLASS_STAR(data, star_selections=[], hist_bound=500, ax_custom=None):
@@ -353,9 +353,12 @@ def extract_stars(detect_img        : str,
     star_line = find_star_line(data, eps_DBSCAN, y_max, mag_fit, verbose, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starDetect_{study_name}.png")
     star_MUvMAG = MUvMAG_star_selection(data, star_line, y_offsets, mag_bounds, snr_min, plot, plot_mag_bounds, plot_y_bounds, save_chckimg, f"{dir_chckimg}/starLine_{study_name}.png")
     if plot | save_chckimg:
-        star_selections = {'MUvMAG' : {'label': 'Stars (MU v. MAG)', 'color': 'r', 'flag': star_MUvMAG}}
-        fig, ax = plt.subplots(1,2,figsize=(12,6))
+        star_selections = {'MUvMAG' : {'label': 'Point-like', 'color': 'r', 'flag': star_MUvMAG}}
+        fig, ax = plt.subplots(1,2,figsize=(12,5))
         plot_MuvMAG(data, star_selections, plot_mag_bounds, plot_mu_bounds, ax_custom=ax[0])
+        ax[0].plot([mag_bounds[0], mag_bounds[1], mag_bounds[1], mag_bounds[0], mag_bounds[0]], 
+                   [star_line+y_offsets[0]+mag_bounds[0], star_line+y_offsets[0]+mag_bounds[1], star_line+y_offsets[1]+mag_bounds[1], star_line+y_offsets[1]+mag_bounds[0], star_line+y_offsets[0]+mag_bounds[0]],
+                   c='r')
         plot_SNR_radius(data, star_selections, plot_rad_bound, ax_custom=ax[1])
         if save_chckimg : fig.savefig(f"{dir_chckimg}/star_{study_name}.png", bbox_inches='tight', dpi=100)
         if plot : plt.show()
